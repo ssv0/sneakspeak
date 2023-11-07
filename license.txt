@@ -1,0 +1,9 @@
+"freely you have received; freely give" (Matt. 10:8)
+
+This software is licensed under the Affero Gnu GPL v3 - https://www.gnu.org/licenses/agpl-3.0.html and NO LATER VERSION, even if the license itself allowed it.
+The license applies to the files in the sneakspeak folder with the exception of www/fonts and www/lib that refer to the earthstar project, deno libraries, libsodium.
+The copyright owner is identified by the sneakspeak/earthstar ID: @root.beaez5reef4abhwybwzunaeekcwok3jxsbcamkut45ybim7ybrzwa
+and by the writing permission on the official channel:
++sneakspeakoff.bb47xpkewtwjha24vw5aymupdgeo5zfcjfd6fiay463tcgmw2y4dq
+
+Happy hacking!

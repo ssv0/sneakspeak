@@ -1,0 +1,263 @@
+Introduction to Sneakspeak for administrators
+
+Sneakspeak is a prototype, offline-first, web application, basically a specialized web UI over Earthstar (https://earthstar-project.org), a little-known protocol for exchanging data among small groups that can work both through network communication and by passing data files manually (the so-called sneakernet), with reference implementation written in javascript for the browser and servers using Deno or Node runtimes (Deno with intel 64 bit on desktop and arm 64 bit on SBC have been tested ATM). Browser security settings make the use of TLS for earthstar servers a necessity. Sneakspeak currently exchanges standard earthstar documents using version 10.2.2. Earthstar data travels in clear but access to data channels and writing are allowed to owners of cryptographic keys. Sneakspeak adds optional encryption of messages. Encryption is robust, uses js libsodium, but the large surface of the browser and the absence of real communication sessions and therefore of perfect forward secrecy do not make this app suitable for scenarios where secrecy is a vital concern.
+
+Communication takes place through channels (called shares in Earthstar terminology), identified by a pair of keys: knowing the private key represents write permission. The public key allows various servers and users to exchange messages through synchronization. 
+
+The user synchronizes messages from browser storage with servers on the network or by exporting / importing text files, the administrators can set up Earthstar servers which either act as a drop box or synchronize with each others. Message authors need to sign them with an ID, (another keypair). All these keys can be generated either on sneakspeak or using earthstar utilities.
+
+The official channel of sneakspeak, that is the channel of which the author of the app has write permission is the following invite format (more on that below).
+  earthstar://+sneakspeakoff.bb47xpkewtwjha24vw5aymupdgeo5zfcjfd6fiay463tcgmw2y4dq/?invite&v=2
+
+Installation and preliminary tour:
+-----------------------------------
+
+Requirements: A GNU/linux environment, enough permissions to download and run binaries as user in it, minimum familiarity with the terminal and a text editor of your choice, as well as familiarity with network concepts such as web address, IP, and port. For communication outside the home network, you will need access to an external VPS or knowledge of how to make network ports available externally.
+
+As a multipage progressive web app, Sneakspeak requires a basic web server to serve the interface, which includes the pages that the user opens with their browser, whether on a desktop or mobile device (tested on Android). It also almost necessarily requires servers that support the Earthstar protocol. These server instructions require Deno. The Earthstar documentation describes how to create and configure servers on node.
+
+The web interface pages (the files you will see in the "www" folder) are created using pure HTML, CSS, and JavaScript. The app pages can be provided by a local server or hosted on a generic hosting service (but there are significant limitations if SSL/TLS, i.e., support for HTTPS pages, is not used). In this introduction, we will use the Caddy server, which is easy to install without interfering with other programs, as it allows you to automatically obtain and manage TLS certificates. For other platforms, operating systems, or installation methods, please refer to the documentation of Earthstar, Deno, and the chosen web server.
+
+To get started, obtain the Sneakspeak archive file. Then, as a regular user, unpack it by executing the following in the terminal:
+
+  tar zxf sneakspeak.tar.gz 
+  cd sneakspeak
+
+It is recommended to now open the file help_null.html contained in www/lib/l10n folder with a browser, as it contains a useful overview, and quickly browse through sneakspeak features. Note: the interface pages are loadable using the file protocol, but browser security policies force the app page to be served via http(s) as instructed below.
+
+1. Local interface installation
+
+Download Caddy and extract it into the webserver folder (see https://caddyserver.com/download), for example (version 2.7.4)
+
+  mkdir -p webserver
+  cd webserver
+  wget https://github.com/caddyserver/caddy/releases/download/v2.7.4/caddy_2.7.4_linux_amd64.tar.gz
+  tar xzf caddy_2.7.4_linux_amd64.tar.gz
+  cd ..
+
+Launch Caddy in local mode to access the interface, use the following script that activates it on port 8083, edit it and switch to a free port number if 8083 is already occupied:
+
+  ./scripts/caddyserver-local.sh &
+
+The message "INFO Caddy serving static files on :..." indicates that Caddy is active and the port number through which you can access sneakspeak.
+
+Open a web browser and enter the address http://127.0.0.1:8083 (adjust the port number if you modified it earlier). Please note that the use of Sneakspeak in anonymous mode is not thoroughly tested at the moment. Sneakspeak cannot be used if JavaScript is not allowed for the domain that serves the interface. No external js resources are used.
+Accessing Sneakspeak this way allows you to use it as an app to write and store notes in the browser's memory (which will be removed when you clear your browsing history).
+
+Note: To return the app to an empty configuration, you can select the "Reset configuration" option.
+
+2. Install deno (more on https://deno.land)
+
+As a regular user, execute the following command:
+
+  curl -fsSL https://deno.land/x/install/install.sh | sh
+
+The installer will display where Deno has been installed, typically in the home directory in the .deno folder (which is invisible). 
+
+Finish setting up the environment adding deno to the command list. For example:
+
+  echo "export DENO_INSTALL=$HOME/.deno" >> $HOME/.bashrc
+  echo "export PATH=\"$DENO_INSTALL/bin:$PATH\"" >> $HOME/.bashrc
+
+Make sure everything is working by opening another terminal or logging out and logging back in, then execute:
+
+  deno --version
+
+This should return a version number instead of "command not found" error.
+
+3. Channel Creation
+
+The server distributed with sneakspeak needs a list of channels to know which data to exchange with users. These channels are stored in specific locations within what we can call a service channel. Those who are authorized to modify it, knowing its secret, can customize the server's behavior. In this example, we will name the service channel "syncshare". There is already a channel with the same name distributed with the sneakspeak server, but it is not writable to avoid making hastily installed servers vulnerable.
+
+Note: The service channel is a regular sneakspeak channel, so the following instructions also apply to channel creation in general.
+
+Using the buttons, go to Channels >> New, enter the text "syncshare," which will be the first part of the channel's address, and click Create. A window confirming the creation will open, click OK. The channel's address will now be displayed on the Channels page. Now we need to communicate the channel's address to the server we are going to create. Click the Invite button, which creates an invitation, an URL containing the channel's data for quick sharing. A box with the invitation will appear, click on it to automatically select it. Using the browser menu or the right-click option, copy the text to the clipboard.
+
+4. Earthstar Server Configuration
+To configure the Earthstar server, we supply the service channel address and write capability. 
+
+Create a text file in the directory "ts/server" of Sneakspeak, where the server will fetch the invitation. Name the file "settingsShare.txt" and either overwrite the existing file or create a new one for demonstration purposes.
+
+Example:
+
+  nano ts/server/settingsShare.txt
+
+Delete the contents of the file and paste (using the terminal menu or Ctrl + Shift + V) the text obtained in the previous step, which is the invitation to the "syncshare" channel.
+
+5. Launching the Earthstar Server
+
+Note: If port 8081 is already in use, modify the file "ts/server/server.ts" from the terminal (change the value after "listenToPort = ").
+
+Use the following command to launch the server:
+
+  ./scripts/earthstarserver.sh
+
+To check if everything is working, view the automatically created log with the command:
+
+  cat ts/server/latest_server_log
+
+It should resemble:
+
+Creating replica for +syncshare.bc6ovczrukz427icrg7o2ziq2k3aiqlzfrmt5nnxkh3ukhno36rta...
+Your server is running.
+Listening on http://localhost:8081/
+
+IMPORTANT: Both "localhost" and "127.0.0.1" refer to your own computer. It seems that with the current browser security policy, only "127.0.0.1" is considered secure, so it is the one to use when specifying a local server.
+
+6. Creating a channel and adding it to server-managed channels
+
+We now create another channel, for normal communication.
+In the browser tab used for sneakspeak, press the Home button and then Channels >> New, and enter the channel name, e.g. "testchat". Press Create. It will be confirmed that the channel has been created. Press Invite and copy the invitation, as before. Press Home.
+
+To broadcast over the network, it is necessary to make the server aware of the channel. Start by selecting the service channel: press Channels, click on the box with the channel name and select syncshare, then press Use. This simply sets it as the current channel for chat, openings, and for the operation we are about to perform.
+
+Now let's add the earthstar server we created. Press Home >> Servers >> Add, enter "http://127.0.0.1:8081" (if the port has been modified, adjust it to the chosen number) and press Add to confirm.
+
+Add the testchat channel to the ones that the server synchronizes, press Add channel.
+
+At this point, SneakSpeak requires an ID and if it does not find a predefined one, it interrupts the user by asking for a New identity. In our case, we do not have any identity to load, so we generate one. To do this, enter a 4-letter code that will be part of the identifier, similar to what happens with channels. For example, "anon", then press Create and save the identity somewhere on the disk, if the browser hasn't already done so automatically. Then press home and start again, Servers >> Add a channel. Make sure that the name syncshare is displayed as configuration channel. If it doesn't, go to Home >> Channels, select syncshare at the top, and press Use.
+In the "Invite or channel to add" box, press ctrl-v or paste to paste the invitation to the testshare channel. Press Add. At this point, the channel will be added to the server through synchronization. If everything is okay, after a few seconds, "...done" will be displayed.
+
+7. The first message
+
+Everything is set up to enter the first message and transmit it to the local server. Go Home >> Channels, select testchat in the top panel, and then press Chat (live). On the page that appears, write any message in the bottom panel and then press the button called "Send" at the bottom. A colored strip will appear to help distinguish one key from another, with the ID name, date, and message. Some browsers do not automatically scroll to the bottom. Having already configured and selected the server, the message is automatically synchronized with it.
+
+Now we can either manually export and import messages, synchronize the server with a folder that we will physically bring to a new location e.g. on USB key (the so-called sneakernet that gives the program its name), for details see the next points, or make the earthstar server work on the internet via https.
+
+8. Reconfiguration of Caddy to add HTTPS connections
+
+Stop Caddy in local mode, if only the one we installed and launched exists, it is enough to run:
+
+  killall caddy
+
+At startup, Caddy looks for a file called Caddyfile in its folder. If it finds it, it takes the configuration from it. Let's create it starting from the example file:
+
+  cp extras/Caddyfile-example webserver/Caddyfile
+
+and customize it in this way:
+
+- Instead of ilmioserver.cc, use a domain/subdomain that points to the server (here it's our machine, a VPS if we can install Caddy and Deno and then SneakSpeak on it), or the public IP for which our machine is visible on the network.
+
+- If we have customized the ports, we will enter as the first number the webserver port (in our examples 8083), as the second number a free port (we use 8082), and as the third the earthstar/sneakspeak server port (8081). This is because Caddy will open an HTTPS connection on the free port and forward the traffic to the SneakSpeak server. The server to use will therefore be https on port 8082.
+
+A result for a local network will look like this:
+
+{
+	local_certs
+	skip_install_trust
+	auto_https disable_redirects
+}
+
+https://192.168.5.4:8083 {
+	root * ../www
+	file_server
+}
+
+https://192.168.5.4:8082 {
+	@websockets {
+		header Connection Upgrade
+		header Upgrade websocket
+	}
+	reverse_proxy @websockets :8081
+}
+
+Start Caddy:
+
+  ./scripts/caddyserver.sh
+
+and access the interface in a new browser window, for example, https://192.168.5.4:8083. Note how in the new window the configuration does not retain the data from the previous connection, as the address has changed.
+
+IMPORTANT: If you intend to keep the server created in this example online, remember to make a backup copy of the complete invitation for the service channel (obtainable from the write invitation button) and the file with the ID used to write to it.
+
+This is a good time to finish exploring the SneakSpeak documentation by clicking the HOME >> Documentation button.
+
+9. Automatic Configuration
+
+The file www/autoconf.html is a template that allows the user who accesses it (on https://192.168.5.4:8083/autoconf.html in the previous example) to automatically configure some aspects of SneakSpeak to save time or simplify the user experience. The administrator can customize it is standard HTML and JavaScript.
+
+Appendix: Security Considerations
+The Sneakspeak app contains libraries in the www/lib folder that are used for Earthstar and other related programs. These libraries are obtained from an unknown source (in this case, me). For added security, it is recommended to get the source from earthstar-project.org and create your own bundles, replacing the existing ones. In this archive, I have used the browser library obtained from https://cdn.earthstar-project.org/js/earthstar.web.v10.2.2.js and the deprecated but functional deno bundle command from https://deno.land/x/earthstar/mod.ts. The same applies to libsodium.
+
+Appendix A2: Folder Synchronization on Disk/USB Drive
+An administrator or experienced user can initiate data exchange on disk with a server using the deno sync.ts script, followed by the invitation.
+bash
+deno run -A ts/data-exchange/sync.ts earthstar://....
+
+The server will be requested, and you can select it using the up and down arrows and the tab key, choosing from the known servers through the invitation or those stored otherwise. Alternatively, you can specify the server directly after the invitation. The data will be stored in the "data" folder.
+
+Other server and sync options available with the Earthstar documentation.
+
+Appendix A3: Using Cloudflare Tunnels
+
+Cloudflare's free tunnel service allows you to make the local ports of a PC accessible from the internet, even if the local PC is behind NAT (and presumably behind a firewall), by using a downloadable and executable program called cloudflared. In real emergency conditions, it is easy for Cloudflare to be unavailable or even hostile. In the meantime, it is a very convenient method for publishing web and sneakspeak servers without having to provide the real addresses of your server and without having to configure TLS. Once the tunnel is closed by terminating the corresponding cloudflared process, the service on local ports becomes inaccessible again. We will use the so-called quick tunnels, which are ephemeral (need to be accessed every now and then and whose name is random at each invocation of cloudflared) but don't need lengthy signup procedures.
+
+A3.1 - Server reconfiguration: In order for the tunnel to work, Caddy must respond to requests without checking the server name, which will depend on the name of the tunnel. Assuming you are using the free port 8084, add the following to the end of your webserver/Caddyfile:
+
+:8084 {
+    root * ../www
+    file_server
+}
+
+Then, activate the configuration by, for example, restarting Caddy:
+  killall caddy
+  ./scripts/caddyserver.sh
+
+This configuration will make your server respond to requests on port 8084, serving files from the ../www directory.
+
+A3.2 - Optional for administrators, creating a Cloudflare user: For added security, a root access administrator can create a specialized user:
+
+  sudo adduser cloudflare-user
+  sudo su - cloudflare-user
+
+and use ctrl-D to return to the previous user after the tunnels have been launched and identified.
+
+A3.3 - Downloading cloudflared: Follow the instructions on Cloudflare's GitHub page (https://github.com/cloudflare/cloudflared#installing-cloudflared). There is no need to sign up or log in to Cloudflare. Example:
+
+  mkdir -p cftunnels
+  cd cftunnels
+  wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+  chmod u+x cloudflared-linux-amd64
+  cd ..
+
+A3.4 - Creating tunnels: You will need at least two tunnels, one for the interface webpages and one for the local earthstar server (no need to connect to the TLS page as the tunnels are already TLS protected). Additional tunnels can be activated and provided to a specific group of users for a crude access control. Use nohup to keep them running.
+
+  nohup ./cftunnels/cloudflared-linux-amd64 tunnel --url http://localhost:8084 > ./cftunnels/web-tunnel.log &
+  nohup ./cftunnels/cloudflared-linux-amd64 tunnel --url http://localhost:8081 > ./cftunnels/es-tunnel.log &
+
+A3.5 - Obtaining tunnel names: The names of the tunnels will vary each time you use cloudflared and are stored in the log files, therefore
+
+grep trycloudflare ./cftunnels/web-tunnel.log
+
+will return the tunnel name for the web interface to connect to use sneakspeak (the name is like https://exterior-chair-wisconsin-phone.trycloudflare.com) and
+
+grep trycloudflare ./cftunnels/es-tunnel.log
+
+will provide the earthstar server address that you can manually add via the servers page or insert in the autoconf.html file.
+
+A3.6 - Closing the tunnel: The linux user who created the tunnel or root can close the tunnels by terminating the corresponding cloudflared processes. For example, we close everything with:
+
+  killall cloudflared-linux-amd64
+
+The next time you use the tunnels, the names will be changed randomly. Sign up for Cloudflare if you want more control over the tunnels.
+
+Appendix A4: How to do without HTTPS or TLS?
+
+Browsers currently do not allow the use of webCrypto (required for earthstar/sneakspeak) if secure origins are not used. Secure origins are those that use TLS, i.e., the HTTPS protocol or the local machine address 127.0.0.1. HTTPS pages do not allow connections to unencrypted websockets, which online sneakspeak servers use. Therefore, both the web servers and the earthstar servers must be accessible using TLS. Caddy does this automatically, while other servers require specific configurations. But what if for some reason the certificates needed for https are no longer renewable? There are various possibilities, such as tolerating warning screens in browsers for self-signed certificates, using your own CA stored in browsers, or a local earthstar server for each user that synchronizes with the others.
+A quick solution is to perform port-forwarding, i.e., data transmission from a local port to the PC port on which the server and interface are running. Within linux environments on an open network, you can use SSH, and if you are already in a VPN or mesh, you can try port-forwarding through them (see their respective documentations). For example, a PC is accessible via the domain example.com and has the web server on port 8083 and the earthstar server on 8081. To communicate, these ports must be accessible from my workstation (you need to configure the routers or use UPnP). Additionally, it has an SSH server accessible via the "user" account, and I have an SSH client to connect. With the following terminal command:
+bash
+ssh -L 8081:127.0.0.1:8081 -L 8083:127.0.0.1:8083 user@example.com
+
+I will have activated the data transfer from my ports to its ports. Therefore, I can open the browser at 127.0.0.1:8083 and use 127.0.0.1:8081 as the server
+
+Appendix A5 for developers: localize Sneakspeak for your language
+
+Sneakspeak currently has rudimentary support for localization and uses two methods for translating messages: the JavaScript function t() for use in JavaScript and the l10n attribute for use in static HTML. Both refer to the same message catalog. It is not a good idea to use both on the same element.
+The translator will need to:
+- Add a locale to the language.html page, see the example of the Italian button, fr-FR example.
+- Copy the www/lib/l10n/messages_it-IT.html message catalog file to www/lib/l10n/messages_fr-FR.html.
+- Translate the content of the messages into their language.
+- as with the above step, make a copy of help_null.html file in help_fr-FR.html and translate it.
+- Add messages_fr-FR.html and help_fr-FR.html to the appPages array of preloaded pages for offline mode at the beginning of the service-worker.js file.
+- Ensure that pages with content to be translated incorporate the external script init.js, i.e., contain <script src="./lib/init.js"></script>.
+
+Note: In future versions of Sneakspeak, an additional list of messages in www/lib/l10n/messages_null.html may be added, to improve internationalization. Copy its contents to messages_fr-FR.html and translate them as well

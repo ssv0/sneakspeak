@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="Restore settings">Ripristina preferenze</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<h1 l10n="Restore settings">Ripristina preferenze</h1>
+	<div id="drop-zone">
+		<p l10n="Drop file here">Trascina qui sopra file preferenze o premi su "scegli file" per selezionarlo.</p>
+		<input type="file" id="file-input">
+	</div>
+	<div class="grid-container">
+		<button id="home" onclick="window.location.href='./index.html'" l10n="Home">HOME</button>
+	</div>
+	<div id="outputdiv">
+	</div>
+	<script type="module">
+		import * as Earthstar from "./lib/earthstar.web.js";
+
+		
+		
+		const dropZone = document.getElementById('drop-zone');
+		const fileInput = document.getElementById('file-input');
+		const outputdiv=document.getElementById("outputdiv");
+		
+		alert (
+				t("Note: restoring a settings file will overwrite current data like the ID, click on Home to cancel")
+			);
+			
+		
+		async function settings_restore_fromString(s) {
+			const settings = new Earthstar.SharedSettings();
+			const settingsfile = JSON.parse(s);
+			try {
+				const servers = JSON.parse(settingsfile.storage['earthstar:servers']);servers.forEach (url => settings.addServer(url));
+			} catch (e) { console.log("Could not load any server:", e.message); }
+			try {
+				const shares = JSON.parse(settingsfile.storage['earthstar:shares']);
+				shares.forEach (addr => settings.addShare(addr));
+			} catch (e) { console.log("Could not load any share:", e.message); }
+			try {
+				const secrets = JSON.parse(settingsfile.storage['earthstar:share_secrets']);
+				for (const addr in secrets) {
+					await settings.addSecret(addr,secrets[addr]);
+				}
+			} catch (e) { console.log("Could not load any secret:", e.message); }
+			try {
+				settings.author = JSON.parse(settingsfile.storage['earthstar:current_author']);
+			} catch (e) { console.log("Could not load author ID:", e.message); }
+			outputdiv.insertAdjacentHTML("beforeend", (t("Settings restored from file")));
+		};
+		
+		
+		dropZone.addEventListener('dragover', (event) => {
+			event.preventDefault();
+			dropZone.classList.add('drag-over');
+		});
+		
+		dropZone.addEventListener('dragenter', (event) => {
+			event.preventDefault();
+			dropZone.classList.add('drag-over');
+		});
+		
+		dropZone.addEventListener('dragleave', (event) => {
+			dropZone.classList.remove('drag-over');
+		});
+		
+		dropZone.addEventListener('drop', (event) => {
+			event.preventDefault();
+			dropZone.classList.remove('drag-over');
+			const file = event.dataTransfer.files[0];
+			const reader = new FileReader();
+			
+			reader.onload = (event) => {
+				const contents = event.target.result;
+				settings_restore_fromString (contents);
+			};
+			
+			reader.readAsText(file);
+		});
+		
+		
+		fileInput.addEventListener('change', (event) => {
+			const file = event.target.files[0];
+			const reader = new FileReader();
+			
+			reader.onload = (event) => {
+				const contents = event.target.result;
+				settings_restore_fromString (contents);
+			};
+			
+			reader.readAsText(file);
+		});
+		
+		
+	</script>
+</body>
+</html>

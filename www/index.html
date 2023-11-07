@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Sneakspeak</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<link rel="manifest" href="./manifest.json">
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<h1>Sneakspeak</h1>
+	<div id="outputdiv">
+	</div>
+	<div class="grid-container">		
+		<button onclick="window.location.href='./channels.html'" l10n="Channels">CHANNELS</button>
+		<button onclick="window.location.href='./servers.html'" l10n="Servers">SERVERS</button>
+		<button onclick="window.location.href='./id_new.html'" l10n="IdNew">Create ID</button>
+		<button onclick="window.location.href='./id_restore.html'" l10n="IdLoad">Load ID</button>
+		<button onclick="window.location.href='./docs_persistence.html'" l10n="Message Persistence">Message Persistence</button>
+		<button onclick="window.location.href='./private_mode.html'" l10n="Private Mode">Private Mode</button>
+		<button onclick="window.location.href='./language.html'"><img class="flag" alt="flag icon" src= "./lib/l10n/Flag_of_the_United_Kingdom.svg">&nbsp;<span l10n="Language">Language</button>
+		<button onclick="window.location.href='./settings_dump.html'" l10n="SavePrefs">Save Preferences</button>
+		<button onclick="window.location.href='./settings_restore.html'" l10n="LoadPrefs">Load Preferences</button>
+		<button onclick="window.location.href='./reset.html'" l10n="ResetConfig">RESET Configuration</button>
+		<button id="btn_docs" l10n="Instructions">Documentation</button>
+	</div>
+	<script type="module">
+		// Register the service worker
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', async function() {
+				navigator.serviceWorker.register('./service-worker.js');
+				console.log('Service worker registered');
+			});
+		}
+		
+		const outputdiv=document.getElementById("outputdiv");
+		function prnt(s) {
+			outputdiv.insertAdjacentHTML("beforeend", (s));
+		}
+		import * as Earthstar from "./lib/earthstar.web.js";
+		import * as Lib from "./lib/lib.js"; 
+		
+		const settings = new Earthstar.SharedSettings();
+		const author=settings.author;
+		if (author !== null) {
+			prnt(`<p>${t("ID")}: ${author.address}`)
+		} else {
+			prnt('<p class="warn">' + t("No known ID") + '</p>');
+		}
+		const share=SSsession.getItem("channel_current");
+		if (settings.shares.length > 0) {
+			prnt(`<p>${t("Current channel")} ${share}`)
+		} else {
+			prnt('<p class="warn">' + t("No known channels") + '</p>');
+		}
+		const syncTo = SSsession.getItem("srv_current");
+		if (syncTo !== null) {
+			prnt(`<p>${t("Current server")} ${syncTo}`);
+		} else {
+			prnt('<p class="warn">'+ t("Offline Mode") + '</p>');
+		}
+		const expiry = SSsession.getItem("expiry_current");
+		if (expiry !== null) {
+			prnt(`<p class="warn">${t("Message Persistence")}: ${(expiry/1000000)}s</p>`);
+		}
+		const passwdHash = SSsession.getItem("passwd_current");
+		if (passwdHash !== null) {
+			prnt('<p class="warn">' + t("Private Mode") + '(' + passwdHash.slice(0,8) + '&hellip;)</p>');
+		}
+		
+		document.getElementById("btn_docs").addEventListener("click", function(event) {
+			event.preventDefault();
+			window.location.href = './lib/l10n/help_' + SSlocal.getItem("locale") + '.html';
+		});
+	</script>
+
+	
+	
+	
+	<p l10n="MainFooter"><small>Sneakspeak: public or private messages over the net or sneakernet - v. 0.6&alpha; (prototype) - uses <a href="http://earthstar-project.org">Earthstar v. 10.2.2</a></small></p>
+	</html>
+	

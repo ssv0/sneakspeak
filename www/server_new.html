@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="Add server">Add server</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">	
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<h1 l10n="Add server">Add server</h1>
+	<p  l10n="Server selected- URL must begin with http(s) -Localhost = 127.0.0.1">Once added, the server gets also selected. Important: address must begin with http:// or https:// - server on local PC (localhost) must use IP 127.0.0.1</p>
+	<form id="server_insert" width="100%">
+		<label for="server_url"  l10n="Server Url">Address (url):</label><br>
+		<input type="url" id="server_url" name="server_url" size="35" autocomplete="off" required>
+	</form>
+	<div class="grid-container">
+		<button id="btn_srv_new" l10n="Add">Add</button>
+		<button id="home" onclick="window.location.href='./index.html'" l10n="Cancel (Home)">Cancel (&rarr;Home)</button>
+	</div>
+	<div id="outputdiv">
+	</div>
+	<script type="module">
+		import * as Earthstar from "./lib/earthstar.web.js";
+		import * as Lib from "./lib/lib.js";
+		const settings = new Earthstar.SharedSettings();
+		
+		const outputdiv=document.getElementById("outputdiv");
+		document.getElementById("btn_srv_new").addEventListener("click", async function() {
+			
+			const url = document.getElementById("server_url").value;
+			const server_list=JSON.stringify(settings.addServer(url));
+			SSsession.setItem("srv_current",url);
+			window.location.href = "./servers.html";
+		});
+	</script>
+</body>
+</html>

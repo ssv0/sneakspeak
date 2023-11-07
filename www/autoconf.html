@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="Autoconf">Autoconf</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<div id="outputdiv">
+	</div>
+	<script type="module">
+		// Register the service worker as we don't start by index.html
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', async function() {
+				navigator.serviceWorker.register('./service-worker.js');
+				console.log('Service worker registered');
+			});
+		}
+		
+		const outputdiv=document.getElementById("outputdiv");
+		
+		import * as Earthstar from "./lib/earthstar.web.js";
+		import * as Lib from "./lib/lib.js";
+		
+		const settings = new Earthstar.SharedSettings();
+		
+		async function autoconf() {
+			
+			//insert a valid channel invite below, easier for the user if it includes a server
+			const inv_text="earthstar://...";
+			const share_kp=await Earthstar.parseInvitationURL(inv_text);
+			
+			//uncomment block below to generate temp identity for the session, else sneakspeak will ask to generate a persistent one when needed
+			if(!(settings.author)) {
+				const author_kp = await Earthstar.Crypto.generateAuthorKeypair("anon");
+				settings.author = author_kp;
+				alert(t("Temporary ID generated, you can also create or import another ID manually"));
+			}
+			
+			//comment line below if you want persistence by default, or alter the time messages are kept on server
+			SSsession.setItem("expiry_current", 86400000000); // in MICROseconds, here 1 day
+			
+			//pick a translation (see available message catalogs in lib/l10n)
+			//SSlocal.setItem("locale","it-IT");
+
+			//leave the rest alone
+			if(await settings.redeemInvitationURL(inv_text) === true) {
+				SSsession.setItem("channel_current",share_kp.shareAddress);
+				SSsession.setItem("srv_current",share_kp.servers[0]);
+				alert(t("Autoconf completed"));
+				window.location.href = "./channels.html";
+			} else {
+				alert("Autoconf failed! configure manually");
+				window.location.href = "./index.html";
+			}
+		}
+		
+		autoconf();
+		
+	</script>
+</body>
+</html>

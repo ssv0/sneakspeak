@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="Language">Language</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<script src="./lib/browsers-sumo/sodium.js"></script>
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<h1 l10n="Available languages">Available Languages</h1>
+	<div class="grid-container">
+		<button id="btn_it-IT"><img class="flag" alt="flag icon" src= "./lib/l10n/Flag_of_Italy.svg">&nbsp;Italiano</button>
+		<button id="btn_none"><img class="flag" alt="flag icon" src= "./lib/l10n/Flag_of_the_United_Kingdom.svg">&nbsp;<span l10n="No translation">No translation</span></button>
+		<button id="home" onclick="window.location.href='./index.html';return false" l10n="Home">HOME</button>
+	</div>
+	<div id="outputdiv">
+	</div>
+	<script type="module" defer>
+		// deferred to hopefully init sodium in the meantime
+		import * as Lib from "./lib/lib.js";
+		const outputdiv=document.getElementById("outputdiv");
+		document.getElementById("btn_it-IT").addEventListener("click", function(event) {
+			event.preventDefault();
+			SSlocal.setItem("locale","it-IT");
+			outputdiv.insertAdjacentHTML("beforeend", ('<p>Selezionato Italiano</p>'));
+		});		
+		document.getElementById("btn_none").addEventListener("click", function(event) {
+			event.preventDefault();
+			SSlocal.removeItem("locale");
+			outputdiv.insertAdjacentHTML("beforeend", ('<p>Translations off</p>'));
+		});
+	</script>
+</body>
+</html>

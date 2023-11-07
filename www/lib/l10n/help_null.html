@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Sneakspeak</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../css/reset.css">
+    <link rel="stylesheet" href="../../css/default.css">
+    <style>
+		code {
+			display:block;
+			font-weight:bold;
+			background:black;
+			color:yellow;
+		}
+		p { margin-bottom:1em; }
+	</style>
+  </head>
+  <body>
+ 
+  <h1>Documentation</h1>
+  <p>Back <button id="home" onclick="window.location.href='../../index.html'">HOME</button></p>
+  <p>Sneakspeak is a web application (desktop or mobile) to exchange messages both via the internet and "on foot" (the so called "sneakernet") manually downloading the contents of the channels. Designed for emergency communications among members of small groups.</p>
+  <p>Installation and configuration (server side, the user needs only an updated web browser): look for the file extras/sneakspeak.txt in the sneakspeak application files</p>
+  <h2>Quick start for users</h2>
+  <p>Access with your web browser the link provided by the administrator to configure sneakspeak automatically. On first access, an alert box will notify the creation of a new identity. Another alert will notify whether the configuration has succeeded.<br>In this case the channel selection screen will appear with the name of a channel in the box at the top, where users can select the current channel.<br>Clicking on the "Chat (live)" button will show, after a few seconds, some of the messages recently added to the channel. In general, try the browser reload button if you have a slow PC or connection.<br>To add a message to the channel, click on the gray box at the bottom, to send it use the Send button.<br>The link [Back] or the back browser button will take you back to the channel list.<br>Pressing the "HOME" button will take you to the main page where more options are present. Pressing "CHANNELS" and then "Open" (shorthand: CHANNELS &gt;&gt; Open) will show all messages.<br>You can edit a message by clicking or tapping twice on it, as long as it is written by you and then pressing "Done". If the change results in an empty message, the message is considered as "deleted", that is will be shown you as empty and will no longer be considered when you exchange messages with the server.<br>If you want to use a fixed ID for future conversations, go back to HOME &gt;&gt; create ID, save the file that will be generated, and reload it if you change or reset your browser. Or, use the Save Preferences / load preferences button to also save channel and server info.<br>To be notified when new messages arrive you have to manually activate the option (see instructions below) AND TO KEEP the Chat window OPEN (it doesn't need to be the foremost window, you can still switch to a new tab or window or other app).<br>The basic philosophy of sneakspeak, at this stage, is to make the user explicitly choose which server and which channel to connect to.</p>
+
+<h2>Tour for users:</h2>
+</h3>Overview on sneakspeak</h3>
+<p>Sneakspeak stores messages in channels and stores them first in the browser storage area. When connectivity is present and the user performs a channel chat, channel open or server use command, sneakspeak synchronizes (i.e. exchanges messages missing on the other side in both directions) with the selected server, if such server knows about the channel, see below).<br>For example, if user A connects to server B and later also to server C, C will receive new messages of A and B even if it does not know about the existence of B.
+</p>
+A channel consists of an address, AKA public key, for example:</p>
+<code>+mychatchannel.b3ej3t9wry....</code>
+<p>and another sequence of characters called secret AKA private key.<br>Only those in possession of both address and secret can write on the channel. Those who only know the address can read the channel (except when private mode is activated, see below), can export messages, and also synchronize the channel with others.</p>
+
+<p></p>Each message is digitally signed as belonging to a user, thanks to the ID or identity. The identity, similar to the channel is an address, for example:</p>
+
+<code>@anon.b83iwu6g8ds...</code>
+
+<p>and a secret. Those knowing address and secret can write messages using that identity, while those knowing only the address can verify the identity of the author, as the identity is automatically included in every message and unforgeable. Messages can be persistent or ephemeral, in which case they are discarded by servers when they have reached an expiration date as set by the author when the message is created.</p>
+
+<p>Servers, (sneakspeak uses plain "Earthstar protocol" servers), can synchronize with each other or act only as a repository, synchronizing with the user.<br>Servers and users can only exchange messages sent to channels they BOTH know about. To make a channel known to a server you need to do the operations described below.<br>An administrator can put the contents of a server in a folder that he can transport and synchronize manually with another server. A user can import and export to individual channel files or individual chat pages.</p>
+
+<p>Technical note: Server connections are always explicit and you can only connect to one server at a time. Nothing prevents administrators from having two or more servers communicate with each other and using a local webserver (home or mobile) to provide the application so as not to depend on the internet connectivity to load the app pages. No server nodes on mobile have been tested at the moment, although a server has been launched on similar platforms (arm64, systems similar to the raspberry pi). The app is compatible with the offline mode of firefox. The app tries to load all pages into memory so it can be used when the connection is unstable or absent. The time in which pages remain in memory depends on the browser, it could be 24 hours or last longer.</p>
+
+<p>To access sneakspeak normally, open with a browser the address of the main page ("HOME"). It is a progressive web app, so it is also "installable". Data like the selected server and channel are lost if you close the tab or open another tab on the same application. Other data such as identity and channel content remains in browser's memory, depending on how the user’s internet browser is configured. Refer to the browser's documentation if you want to erase sneakspeak related data.</p>
+
+<h3>MAIN PAGE:</h3>
+<p>The page shows at the top some information such as the current ID, the selected channel and server, whether the private mode has been activated, whether messages to be sent have an expiry date set, and a series of buttons.</p>
+
+<h3>Create ID button:</h3>
+<p>With the quick start you got a temporary ID. You can see the current ID and save it with the rest of the preferences, see below, but to be identifiable in the long term, you need to manually create your own ID, keep the file that contains it in a safe place and reload it when the browser is a new one or lost it.<br>
+To create an ID click on the name box, enter four letters for the short name, which prefixes the ID address to help with identification. The limit of four letters depends on the protocol sneakspeak uses to communicate, therefore it's not modifiable. Different users can end up with the same short name, but they will all have different remaining parts of the address. After pressing "Create" the browser either automatically saves or asks to save the text file containing the identity.<br>The ID is created and used locally so the administrator is not able to recover forgotten IDs.<br> There is also a Reset button which is equivalent to the button described below.</p>
+
+<h3>Load ID button:</h3>
+<p>Loads the ID file created with the step above and makes it the current ID used to sign messages. Either drag the file or choose by clicking the button.
+</p>
+<h3>CHANNELS button:</h3>
+<p>It shows a box from which you can choose which channel to operate on, classified by those you have full access on (because you have either created them or been supplied the secret), and the readonly ones. Then there are buttons to perform operations on the selected channel.</p>
+
+<h3>CHANNELS &gt;&gt; Chat (live):</h3>
+<p>(Becomes "Write (offline)" when there's no selected server) - Press it to add messages, a new window will be opened with the most recent messages (sorted by order of arrival). The author of the message will be identified by its ID and a colored stripe that varies depending on the full ID address. Similar to the so-called "gravatar".</p>
+<h3>CHANNELS &gt;&gt; Open:</h3>
+<p>Shows all messages from the selected channel, with pagination. It also shows the full ID address of the author, the date of creation, optional expiration signaled by an arrow, the complete path of the message, for possible use with other applications that use the same protocol. With a double click or tap you edit your own messages, deleting the contents of the pane makes the message empty and therefore not synchronized with other users or "deleted".<br>
+Pagination links contain the number of pages in parentheses ([1] [2] etc., as well as a button to export only messages from that page to a text file. To export all channel messages see below.</p>
+
+<h3>CHANNELS &gt;&gt; Use:</h3>
+<p>Marks the channel selected in the list as the current one, without the need to open it.</p>
+
+<h3>CHANNELS &gt;&gt; Invite:</h3>
+<p>A box appears containing an invitation link containing info on the selected channel and, BEWARE, the addresses of known servers. The invitation is a text that starts with earthstar://. By clicking on the box the text of the invite gets completely selected, you can then copy it and share it as a normal short text. The invitation is for read only access by default. Note it is also a valid invitation for any other application using the earthstar protocol that accepts invites; earthstar terminology refers to channels as "shares".</p>
+
+<h3>CHANNELS &gt;&gt; Invite &gt;&gt; Invite Read/Write:</h3>
+<p>Adds the write capability, that is the secret key of the channel, to the invitation and describes it as "Full access".</p>
+
+<h3>CHANNELS &gt;&gt; Invite &gt;&gt; Edit</h3>
+<p>Makes the invitation box editable, in case one wants e.g. to remove a server address. (bug: From mobile such an operation is difficult, but one can copy/paste the invite in whatever note-taking app or site and edit there).</p>
+
+<h3>CHANNELS &gt;&gt; Receive:</h3>
+<p>Paste here a received invitation and press the Receive button, so the channel will be inserted in the channel list and the servers will get added to the server list (see below).</p>
+
+<h3>CHANNELS &gt;&gt; New:</h3>
+<p>To generate a channel enter a name, which will form the first part of the address and press button "Create". The channel will be added to the list, you can then share its address with others using CHANNELS &gt;&gt; Invite. ATTENTION, the channel messages will not be retransmitted by servers until the server is configured to do so. In the default server distributed with the app that is done by writing the channel address on the service channel, see below. In generic earthstar servers, it might work in a different way so or you need to ask its administrator.  A normal user can then create a channel for storing personal notes. To send message by sneakernet, as of now, the receiver must have added that channel.<br><small>TIP: the channel address is in the messages themselves, in the field called "share", so if you receive a bundle of messages you can open them as a text, find the string after "share": (for example "+chat.b39f3....q") and create the invite for the channel by prefixing earthstar:// and adding /?invite/&v=2 (in the example is "earthstar://+chat.b39f3....q/?invite&v=2"</small></p>
+
+<h3>CHANNELS &gt;&gt; Export Messages:</h3>
+<p>To save a text file containing all channel messages which can be imported by CHANNELS &gt;&gt; Import Messages button. The file (either automatically or manually saved depending on the browser) will by default contain the name of the channel, which will be used for verification during loading.</p>
+
+<h3>CHANNELS &gt;&gt; Forget:</h3>
+<p>Removes a channel from the list at the top of the Channels page. Beware it makes unavailable but does not completely erase messages from the browser memory and does not prohibit others from using the channel to continue exchanging data.</p>
+
+<h3>CHANNELS &gt;&gt; Forget write permission:</h3>
+<p>In case you want to give up writing on a channel for security reasons. To regain permission you will need to find a full access invitation to the channel, which also contains the secret.</p>
+
+<h3>CHANNELS &gt;&gt; Notifications:</h3>
+<p>Enable notifications (your browser will ask for permission) - WARNING, notifications are only issued by the chat window itself, as it is connected continuously to the configured server. Sneakspeak does not use some external notification server. So, if you do not leave that window open in your browser, you will not receive any. The type and effect of notifications depend on browser and system preferences and can be configured there.</p>
+
+<h3>SERVERS button:</h3>
+<p>Displays a box with the list of known servers.<br>NOTE: They are not necessarily online nor their address is necessarily accessible to other users. For example, if I create an invitation while I am using a server on a private IP (localhost or the local network), those who receive the invitation will see servers with addresses that they cannot use. Note to administrators: Currently only ipv4 addresses and domains that refer to them have been tested.</p>
+
+<h3>SERVERS &gt;&gt; Add:</h3>
+<p>If you know the web address of a server that hosts channels that you want sneakspeak to synchronize with, add it to the Servers list above by typing the address in the box, obey the directions you find in the page and press Add. Bug: pressing cancel will de-select the currently used server, select it from the SERVERS page and press Use to restore it.</p>
+
+<h3>SERVERS &gt;&gt; Synchronize:</h3>
+<p>It tells sneakspeak to exchange messages with this server and make it the current server. Sneakspeak allows only one current server at a time to give the user explicit control over communication channels. Synchronization ends when "...done" appears, which will not happen with incorrect/unusable addresses or inactive servers. NOTE: all channels known to both sneakspeak and selected server will be synchronized.</p>
+
+<h3>SERVERS &gt;&gt; Go Offline:</h3>
+<p>Deselects the server you are using. This way newly created or edited messages are only memorized within the local browser's site data. Re-activate a server and share messages with SERVERS &gt;&gt; Synchronize.</p>
+
+<h3>SERVERS &gt;&gt; Add a channel</h3>
+<p>For administrators or experienced users. Write permission to the service channel is required, see Administrator documentation. If the currently selected channel is the service channel for the currently selected server, copy an invitation for a channel you want the server to know about and press Add a channel, then double-check the displayed Settings channel and Selected server, paste the invitation and press receive. By opening the service channel with CHANNELS &gt;&gt; Open, you can check the added channels.</p>
+
+<h3>SERVERS &gt;&gt; Forget:</h3>
+<p>Removes a server address from the known servers list on top of the page. Note it is an operation pertaining only to the user, it does not put the server offline, does not prevent other people to keep using it.</p>
+
+<h3>Message persistence button:</h3>
+<p>Loads a page where the user can set a persistence value for new messages which defines when they are considered expired by the system, regardless the channel they are sent to. Expired messages gets deleted automatically and don't get synchronized anymore. Note: The persistence value is always calculated from the time of sending the message, so if user sets expiration to 1 hour at midnight, and sends a new message at 1AM, the message will expire at 2AM, and a server receiving it at 1:30AM will still consider it expired at 2AM. Expired messages are deleted by servers when they sync or perform operations. So they are still retrievable from the database of inactive servers or, obviously, exported messages. Persistence is a feature of Earthstar protocol in general.</p>
+
+<h3>Message persistence &gt;&gt; Choose:</h3>
+<p>Part of the "By age option", lets user choose how much a message should last from the drop-down menu. By pressing Choose, sneakspeak displays a confirmation message where age is expressed in seconds. Go to Channels with the proper button to exit when you are done.</p>
+
+<h3>Message persistence &gt;&gt; Compute duration:</h3>
+Part of the "By expiry date" option, which is more of a helper. By entering a date or datetime and pressing compute duration button, the relative duration in seconds is computed and set as persistence. Note it doesn't get re-computed. Example, I set expiry date to next Christmas, compute and set as persistence, and send a message after 24h, the message will last till one day after Christmas. Go to Channels with the proper button to exit when you are done.</p>
+
+<h3>Message Persistence &gt;&gt; No limit:</h3>
+<p>Removes and forgets about any expiration, so messages will not expire and persist on servers. They can still be manually deleted BY THE AUTHOR.</p>
+
+
+<h3>Private mode button:</h3>
+<p>With private mode enabled, messages are encrypted through the secret (AKA private key, AKA write capability, AKA having full access) of the channel, and a password which can also be empty. So, if Private Mode is enabled with an empty password, all users that can write on the channel will be able to decrypt the message by entering private mode themselves. If you activate it and set a password, you will only read private messages written with that same password. Therefore in the same channel several users can enter messages with different passwords. Users with no Private mode enabled, or with no secret, or with no correct password, will see the encrypted message containing unreadable encrypted data. Knowing the password used on a channel does not allow you to read other channels' private messages, you also need the secret of the other channels. There is no administrator control over the password used, so they cannot reset or block it. There is no password validity check, each password will allow you to write encrypted messages with it and will make only those ones readable. So, the first way to check if a re-entered password is OK is checking whether old messages encrypted with that password are readable. The second way, since the password is uniquely linked to the public key, which is seen in the path of each encrypted message after the inscription "pubkey", is to open the channel and check the pubkey in the path. Disabling the mode will return to normal typing and you will not be able to read encrypted messages, not even your own. <br><small>This feature is not compatible with other encryption schemes possibly planned for Earthstar, so, while private messages can be sent to any Earthstar server, they will be decoded easily only by sneakspeak.</small></p>
+
+<h3>Language button:</h3>
+<p>If a translation for sneakspeak application is available for a different language, it is made available on this page. Messages, IDs, channel names, are not affected.</p>
+
+<h3>Save Preferences button:</h3>
+<p>It allows you to download a file that contains the data specified on the page (identity, channels etc.). The page displays the settings and the Dump button downloads them. The restore button is equivalent to the button described below.</p>
+
+<h3>Load preferences button:</h3>
+<p>It works in a similar way to the Load ID from file button, for the file saved with the previous button. You will be asked for confirmation before overriding the current settings with those of the file.</p>
+
+<h3>Reset Configuration button:</h3>
+<p>Forget IDs, channels and servers used, and application pages cached in the browser, to start from an empty state. Also useful in case of app update. Data is not deleted so it might remain recoverable by power users or experts.</p>
+
+<h3>INSTRUCTIONS button:</h3>
+<p>Display this page.</p>
+
+<p>Return <button id="home" onclick="window.location.href='./index.html'">HOME</button>
+</p>		
+</body>
+</html>

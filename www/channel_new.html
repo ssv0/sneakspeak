@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="Create Channel">Create Channel</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<h1 l10n="Create Channel">Create Channel</h1>
+	<form id="channel_insert" width="100%">
+		<label for="prefix"l10n= "Name (max 15 alphanumeric characters beginning with a letter):">Name (max 15 alphanumeric characters beginning with a letter):</label>
+		<input type="text" size="15" id="prefix" name="prefix" autocomplete="off" pattern="[A-Za-z][A-Za-z0-9]{0,14}" required>
+		
+		<div class="grid-container">
+			<button type="submit" id="btn_chn_new" l10n="Create">Create</button>
+			<button id="home" onclick="window.location.href='./index.html'" l10n="Cancel (Home)">"Cancel (&rarr;Home)"</button>
+		</div>
+	</form>
+	<div id="outputdiv">
+	</div>
+	<script type="module">
+		const outputdiv=document.getElementById("outputdiv");
+		
+		import * as Earthstar from "./lib/earthstar.web.js";
+		import * as Lib from "./lib/lib.js";
+		const settings = new Earthstar.SharedSettings();
+		
+		document.getElementById("channel_insert").addEventListener("submit", async function(event) {
+			event.preventDefault();
+			const prefix = document.getElementById("prefix").value.toLowerCase();
+			const share_kp = await Earthstar.Crypto.generateShareKeypair(prefix);
+			settings.addShare(share_kp.shareAddress);
+			await settings.addSecret(share_kp.shareAddress,share_kp.secret);
+			alert(t("Channel created and selected, address: ")+ share_kp.shareAddress);
+			SSsession.setItem("channel_current",share_kp.shareAddress);
+			window.location.href = "./channels.html";
+		}
+		);
+	</script>
+</body>
+</html>

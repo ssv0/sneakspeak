@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title l10n="Open">Apri</title>
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<script src="./lib/init.js"></script>
+	<style>
+		html, body {
+			margin: 0;
+			padding: 0;
+		}
+		#init_block {
+			height: 6em;
+			display: flex;
+			flex-direction:column;
+			align-items: center;
+			justify-content: center;
+			padding:1em;
+		}
+		#init_block p {
+			text-align:center;
+			overflow-wrap: anywhere;
+		}
+		#items div {
+			white-space: pre-wrap;
+			overflow-wrap: anywhere;
+			max-height: 12em;
+			overflow-y: auto;
+			overflow-x: hidden;
+			border-radius: 1em;
+			background-color:#181818;
+			padding:.5em;
+			margin-bottom:.2em;
+		}
+		#items div p {
+			background-repeat: no-repeat;
+			background-size: 7em 0.6em;
+			background-position: 3em 0.2em;
+			line-height: 1;
+		}
+		small {
+			font-size: .7em;
+			font-style: italic;
+			vertical-align:baseline;
+		}
+		#pagination a:hover {
+			text-decoration:none;
+			color: white;
+		}
+		#pagination a.current {
+			color: white;
+		}
+	</style>
+	
+	
+</head>
+<body>
+	<script>
+		const prefs = JSON.parse(sessionStorage.getItem("sneakSpeakSessionPrefs")); //using Lib would complicate things a little
+		const passwdHash = prefs?.passwd_current ?? null;
+		if (passwdHash !== null) { // conditionally load sodiumjs
+			const sodiumScript = document.createElement('script');
+			sodiumScript.src='./lib/browsers-sumo/sodium.js';
+			sodiumScript.async=false;
+			document.head.appendChild(sodiumScript);
+		}
+	</script>
+	<div id="init_block">
+	</div>
+	<p id="pagination"></p>
+	<div id="items"></div>
+	<script type="module">
+		import * as Lib from "./lib/lib.js";
+		
+		import * as Earthstar from "./lib/earthstar.web.js";
+		globalThis.Earthstar = Earthstar; //debug
+		
+		const settings = new Earthstar.SharedSettings();
+		
+		Lib.checkShare(settings);
+		Lib.checkAuthor(settings);
+		
+		const share = SSsession.getItem("channel_current");
+		let startAfter = SSsession.getItem("channel_current_startAfter"); //pagination
+		const secrets = settings.shareSecrets;
+		const currentSecret = secrets[share];
+		const shareKeypair = {shareAddress: share, secret: currentSecret};
+		const authorKeypair = settings.author;
+		const syncTo = SSsession.getItem("srv_current");
+		const expiry = Number(SSsession.getItem("expiry_current"));
+		
+		var scrthash, keyPair;
+		if (passwdHash !== null) {
+			await sodium.ready;
+			scrthash = sodium.crypto_generichash(32, passwdHash + currentSecret); // the key depends also on the channel secret
+			keyPair = await sodium.crypto_box_seed_keypair(scrthash);
+		}
+		
+		document.title += share ;
+		document.getElementById("init_block").innerHTML = '<p>' + t("Contents of ") + '<br>' + share + '<br>' + t("Server:") + syncTo +'</p>';
+		if (expiry > 0) {
+			document.getElementById("init_block").insertAdjacentHTML("beforeend", ('<p>' + t("Message persistence") + (expiry/1000000) + 's</p>'));
+		}
+		if (passwdHash !== null) {
+			document.getElementById("init_block").insertAdjacentHTML("beforeend", ('<p>' + t("Private Mode Enabled") + `(${passwdHash.slice(0,8)}&hellip;)</p>`));
+		}
+		const replica = new Earthstar.Replica({
+			driver: new Earthstar.ReplicaDriverWeb(shareKeypair.shareAddress),
+			shareSecret: shareKeypair.secret,
+		});
+		
+		
+		const peer = new Earthstar.Peer();
+		peer.addReplica(replica);
+		if (syncTo !== null) { const syncer = peer.sync(syncTo); await syncer.isDone(); }
+		
+		//helper
+		function docEdit(path,author) {
+			if ((authorKeypair !== null) && (author === authorKeypair.address)) {
+				SSsession.setItem("doc_current",path);
+				window.location.href = "./doc_edit.html";
+			} else { alert (t("You can only edit your own documents")); }
+		}
+		
+		// Read items from box.
+		const items = document.getElementById("items");
+		
+		
+		function appendItems(docs) {
+			if (passwdHash !== null) {
+				Lib.deobfuscateDocs(docs,keyPair);
+			}
+			for (let doc of docs) {
+				const item = document.createElement("div");
+				const header = document.createElement("p");
+				const author = Earthstar.parseAuthorAddress(doc.author);
+				const date = new Date(doc.timestamp / 1000);
+				const dateString = date.toLocaleString();
+				let docExpires = '';
+				if (doc.deleteAfter) {
+					docExpires = '&rarr;' + (new Date(doc.deleteAfter / 1000)).toLocaleString();
+				}
+				header.style.backgroundImage = Lib.crcToGradient(author.address);
+				header.innerHTML = `${author.name}<br><small>${author.address} ${dateString} ${docExpires}<br>${doc.path}</small>&nbsp;»`;
+				item.textContent = doc.text;
+				item.insertBefore(header, item.firstChild);
+				// make it editable by doubleclick
+				item.addEventListener('dblclick', function(event) {
+					docEdit(doc.path,author.address);
+				});
+				items.append(item);
+			};
+		}
+		
+		
+		// pagination
+		const pageLen = 50; // page length
+		// 1 query to get highest localindex, calculate pages and show the most recent by localindex, and the pages for the previous stuff
+		let docs = await replica.queryDocs({
+			historyMode: "latest",
+			limit: 1,
+			orderBy: "localIndex DESC"});
+		let highestLIdx = -1;
+		if (docs.length > 0) {
+			highestLIdx= docs[0]._localIndex; // todo check offset
+		}
+		let paginationIdx = [];
+		for (let i = 0; i <= highestLIdx; i += pageLen) {
+			paginationIdx.push(i);
+		}
+		const pIdxMax = paginationIdx.length - 1
+		
+		if (startAfter === null) { startAfter = paginationIdx[pIdxMax ]; }
+		
+		for (let i = 0; i <= pIdxMax ; i += 1) {
+			let c = "";
+			if (startAfter == paginationIdx[i]) { c = "class='current'" }
+			let pLink= `<a href="#" ${c} onclick='SSsession.setItem("channel_current_startAfter",${paginationIdx[i]}); window.location.reload(false); return false'>[${i + 1}]</a>`;
+			document.getElementById("pagination").insertAdjacentHTML('beforeend',pLink);
+		}
+		document.getElementById("pagination").insertAdjacentHTML('beforeend','<a href="./channels.html">['+t("Back")+']</a> <button id="btn_dump">'+t("Export page")+'</button>');
+		
+		items.innerHTML = "";
+		
+		const query={ historyMode: "latest", limit: pageLen, orderBy: "localIndex ASC"};
+		query.startAfter = {localIndex: Number(startAfter)}
+		
+		docs = await replica.queryDocs(query);
+		
+		appendItems(docs);
+		
+		
+		
+		document.getElementById("btn_dump").addEventListener("click", function(event) {
+			event.preventDefault();
+			Lib.downloadJSON(docs,`ssv0${share}-${startAfter}.json`);
+		});
+	</script>
+</body>
+</html>

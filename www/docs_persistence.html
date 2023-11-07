@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="Message Persistence">Message Persistence</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<script>
+	</script>
+	<h1 l10n="Persistence of messages you send:">Persistence of messages you send:</h1>
+	<h2 l10n="By Age option">By Age option</h2>
+	<p l10n="In seconds, starting from the moment the message is created">In seconds, starting from the moment the message is created</p>
+	<select id="expiry_list">
+		<option value="180000000" l10n="3 minutes">3 minutes</option>
+		<option value="1800000000"l10n="30 minutes">30 minutes</option>
+		<option value="10800000000"l10n="3 hours">3 hours</option>
+		<option value="43200000000"l10n="12 hours">12 hours</option>
+		<option value="86400000000"l10n="1 day">1 day</option>
+		<option value="259200000000"l10n="3 days">3 days</option>
+		<option value="604800000000" selected l10n="7 days (1 week)">7 days (1 week)</option>
+		<option value="2678400000000"l10n="31 days (~1 month)">31 days (~1 month)</option>
+		<option value="8035200000000" l10n="93 days (~3 months)">93 days (~3 months)</option>
+		<option value="31622400000000" l10n="366 days (~1 year)">366 days (~1 year)</option>
+		<option value="94867200000000" l10n="3 years ~">~3 years</option>
+	</select>
+	<div class="grid-container">
+		<button id="btn_sel" l10n="Choose">Choose</button>
+		<button id="btn_exp_reset" l10n="No limit">No limit</button>
+		<button id="home" onclick="window.location.href='./channels.html'"  l10n="Channels">&rarr;Channels</button>
+		
+	</div>
+	<div id="outputdiv">
+	</div>
+	<h2 l10n="By Expiry Date option">By Expiry Date option</h2>
+	<p l10n="Warning, as the duration is computed from the moment the message is created, it will persist a little bit more than the expiry set below">Warning, as the duration is computed from the moment the message is created, it will persist a little bit more than the expiry set below</p>
+	<form id="expiry_datetime" width="100%">
+		<label for="exp_dt" l10n="Date:">Date:</label>
+		<input type="datetime-local" id="exp_dt" required>
+		<div class="grid-container">
+			<button type="submit" id="btn_calc"  l10n="Compute duration">Compute duration</button>
+		</div>
+	</form>
+	<div id="outputdiv1">
+	</div>
+	<script type="module">
+		import * as Lib from "./lib/lib.js";
+		const outputdiv=document.getElementById("outputdiv");
+		const outputdiv1=document.getElementById("outputdiv1");
+		
+		var dropdown=document.getElementById("expiry_list");
+		
+		// datetime form validation
+		const dateString = (new Date()).toISOString().slice(0,16);
+		document.getElementById("exp_dt").min = dateString;
+		
+		document.getElementById("btn_sel").addEventListener("click", function() {
+			const expiry=dropdown.value; 
+			SSsession.setItem("expiry_current", expiry);
+			outputdiv.insertAdjacentHTML("beforeend", ('<p>' +t("Chosen duration (seconds): ") + (expiry/1000000) +'</p>'));
+		});
+		
+		document.getElementById("btn_exp_reset").addEventListener("click", function() {
+			SSsession.removeItem("expiry_current");
+			outputdiv.insertAdjacentHTML("beforeend", ('<p>' + t("Persistence limit: none") + '</p>'));
+		});
+		
+		document.getElementById("expiry_datetime").addEventListener("submit", function(event) {
+			event.preventDefault();
+			const now = (new Date()).getTime()/1000;
+			const toCalc = document.getElementById("exp_dt").value;
+			const expiry = Math.round((new Date(toCalc).getTime()/1000) - now);
+			if (expiry > 60) { // at least 60s
+				SSsession.setItem("expiry_current", (expiry*1000000));
+			} else {
+				outputdiv1.insertAdjacentHTML("beforeend", ('<p>' + t("Error: requested persistence is insufficiently long") + '</p>'));
+			}
+			outputdiv1.insertAdjacentHTML("beforeend", ('<p>' + t("Chosen duration (seconds): ") + expiry + '</p>'));
+			
+		});
+		
+	</script>
+</body>
+</html>

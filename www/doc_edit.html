@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="Edit Message">Edit Message</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<form id="doc" width="100%">
+		<label id="doc_label" for="doc_text" l10n="Edit:">Edit:</label><br>
+		<textarea style="width: 96%; min-height:4em; resize: none" rows="8" id="doc_text"></textarea>
+	</form>
+	
+	<div class="grid-container">
+		<button id="btn_doc_edit" l10n="Done">Done</button>
+		<button id="back" onclick="window.location.href='./channel_open.html'" l10n="Back">Back</button>
+	</div>
+	<div id="outputdiv">
+	</div>
+	<script type="module">
+		import * as Lib from "./lib/lib.js";
+
+		var passwdHash = SSsession.getItem("passwd_current");
+		if (passwdHash !== null) { // conditionally load sodiumjs
+			const sodiumScript = document.createElement('script');
+			sodiumScript.src='./lib/browsers-sumo/sodium.js';
+			sodiumScript.async=false;
+			document.head.appendChild(sodiumScript);
+		}
+
+		import * as Earthstar from "./lib/earthstar.web.js";
+
+		const outputdiv=document.getElementById("outputdiv");
+		const btn=document.getElementById("btn_doc_edit");
+		const doc_text=document.getElementById("doc_text");
+		
+		const settings = new Earthstar.SharedSettings();
+		const path=SSsession.getItem("doc_current");
+		const share = SSsession.getItem("channel_current");
+		const secrets = settings.shareSecrets;
+		const currentSecret = secrets[share];
+		const shareKeypair = {shareAddress: share, secret: currentSecret};
+		const authorKeypair = settings.author;
+		const syncTo = SSsession.getItem("srv_current");
+		
+		document.title += path;
+		
+		if (currentSecret === undefined) { // readonly channel
+			passwdHash = null; // don't do crypto
+			btn.innerHTML=t("Read Only");
+			btn.disabled = true;
+		}
+		
+		var scrthash, keyPair;
+		if (passwdHash !== null) {
+			await sodium.ready;
+			scrthash = sodium.crypto_generichash(32, passwdHash + currentSecret); // the key depends also on the channel secret
+			keyPair = await sodium.crypto_box_seed_keypair(scrthash);
+		}
+		
+		//TODO: sync, pre-populate textarea, specify path
+		
+		const replica = new Earthstar.Replica({
+			driver: new Earthstar.ReplicaDriverWeb(shareKeypair.shareAddress),
+			shareSecret: shareKeypair.secret,
+		});
+		
+		const peer = new Earthstar.Peer();
+		peer.addReplica(replica);
+		if (syncTo !== null) { let syncer = peer.sync(syncTo); await syncer.isDone(); }
+		
+		const doc = await replica.getLatestDocAtPath(path);
+		if (passwdHash !== null) {
+			Lib.deobfuscateDocs(Array.of(doc),keyPair);
+		}
+		
+		doc_text.value = doc.text
+		
+		btn.addEventListener("click", async function() {
+			if (doc_text.value === doc.text) {
+				alert (t("Unaltered message, nothing updated")); return }
+			if (doc_text.value.trim().length == 0) {
+				if (confirm (t("Do you really want to erase this message?"))) { await replica.wipeDocAtPath(authorKeypair,path); }
+				return;
+			}
+			const toBeWritten = {
+				text: doc_text.value,
+				path: path,
+			};
+			if (doc.deleteAfter !== undefined) {
+				toBeWritten.deleteAfter = doc.deleteAfter;
+			}
+			Lib.setExpiry(toBeWritten);
+			if (passwdHash !== null) {
+				if (path.endsWith ('/pubkey' + sodium.to_hex(keyPair.publicKey))) { // encryption matches the current doc, proceed
+					Lib.obfuscateDoc(toBeWritten, keyPair);
+				} else {
+					alert(t("Error: the current password does not match the one used to write the message"));
+					return;
+				}
+			}
+			const result = await replica.set(authorKeypair, toBeWritten);
+			if (Earthstar.isErr(result)) {
+				alert(result);
+			}
+			if (syncTo !== null) { let syncer = peer.sync(syncTo); await syncer.isDone(); }
+			
+			outputdiv.innerHTML=t("Done");
+		});
+		
+	</script>
+</body>
+</html>

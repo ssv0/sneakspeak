@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Sneakspeak</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../css/reset.css">
+    <link rel="stylesheet" href="../../css/default.css">
+    <style>
+		code {
+			display:block;
+			font-weight:bold;
+			background:black;
+			color:yellow;
+		}
+		p { margin-bottom:1em; }
+	</style>
+  </head>
+  <body>
+ 
+ <h1>Istruzioni</h1>
+ <p>O ritorna a <button id="home" onclick="window.location.href='../../index.html'">HOME</button>
+ </p>		
+    <p>    
+Sneakspeak è una applicazione web (desktop o mobile) per scambiarsi messaggi sia via internet che "a piedi" (la cosiddetta sneakernet) scaricando manualmente i contenuti dei canali. Pensato per comunicazioni di emergenza tra piccoli gruppi.
+    </p>
+    <p>
+Installazione e configurazione (lato server, l'utente necessita solo di un browser web aggiornato), vedi nell'archivio dell'app sneakspeak il file extras/sneakspeak-ita.txt
+    </p>
+    <h1>Utilizzo veloce</h1>
+    <p>
+Da browser inserire l'indirizzo fornitovi dall'amministratore per configurare sneakspeak automaticamente. Se è il primo utilizzo apparirà una finestra che segnala la creazione di una nuova identità. Poi apparirà in ogni caso un messaggio che comunica se la configurazione ha funzionato. In tal caso apparirà la schermata di selezione canali con il nome di un canale nel riquadro in cima. Premendo il pulsante chat appariranno (dopo qualche secondo) alcuni dei messaggi recentemente aggiunti al canale, con la possibilit&agrave; di chattare. Per scrivere cliccare sul riquadro grigio in fondo, per inviare premere sul pulsante invia). Il link o il tasto del browser indietro riporterà all'elenco canali. Premendo il pulsante "HOME" si andrà alla pagina principale. Premendo "CANALI" e poi "Apri" (in breve diciamo CANALI &gt;&gt; Apri) si mostrerà tutti i messaggi. Cliccando due volte su un messaggio, purché scritto da voi, si potrà modificarlo. Se la modifica risulta in contenuto vuoto il messaggio viene considerato come "cancellato". Ovvero risulterà un messaggio vuoto che non verrà più considerato dagli altri utenti e dal server. Se si vuole essere riconoscibili per collegamenti futuri, HOME &gt;&gt; crea ID nuova, salvare il file che verrà generato, e ricaricarlo se si cambia o si resetta il browser. Per avere notifiche dell'arrivo di nuovi messaggi bisogna manualmente attivare l'opzione (vedi istruzioni qui sotto) E NON CHIUDERE la finestra della applicazione (si può comunque passare a un nuovo tab o finestra o altra applicazione). La filosofia di base di sneakspeak è quella di far decidere all'utente a quale server e a quale canale collegarsi.
+    </p>
+    <h1>Tour per utenti:</h1>
+    <h2>Panoramica su sneakspeak</h2>
+    <p>
+Sneakspeak memorizza messaggi tramite canali e li memorizza prima di tutto nel browser. Connettività permettendo li trasmette al server prescelto, tramite sincronizzazione, ovvero scambio dei messaggi che mancano all'altro. Ad esempio, se l'utente A si collega al server B e successivamente anche al C, C riceverà i messaggi nuovi di A e di B anche se non sa dell'esistenza di B.
+    </p>
+    <p>
+Il canale è costituito da un indirizzo, ad esempio:</p>
+<code>
++mychatchannel.b3ej3t9wry....
+</code>
+<p>e da un segreto, altra sequenza di caratteri. Chi conosce indirizzo e segreto può scrivere sul canale. Chi conosce solo l'indirizzo può leggere il canale (a meno di modalità privata, descritta in seguito), esportare i messaggi, e quindi sincronizzare il canale con altri.
+    </p>
+    <p>
+Ogni messaggio è attribuito tramite firma digitale a un utente, tramite la ID ovvero l'identità. L'identità, in maniera simile al canale è costituita da un indirizzo, ad esempio:
+</p><code>
+@anon.b83iwu6g8ds...
+</code>
+<p>
+e da un segreto. Chi conosce indirizzo e segreto può scrivere messaggi utilizzando quella identità, chi conosce solo l'indirizzo può verificare che quanto scritto è di una identità conosciuta. 
+I messaggi possono essere persistenti o effimeri, ovvero venir scartati dai server quando hanno raggiunto una data di scadenza decisa dall'autore.
+    </p>
+    <p>
+I server possono sincronizzarsi tra loro o fungere solo da deposito, sincronizzandosi con l'utente. I server e gli utenti possono solo scambiarsi i messaggi dei canali che ENTRAMBI conoscono. Per fare conoscere un canale a un server serve compiere le operazioni descritte più avanti. Un amministratore può mettere il contenuto di un server in una cartella che può trasportare e sincronizzare a mano con un altro server. Un utente può effettuare importazione ed esportazione su file di singoli canali o di singole pagine di chat. 
+    </p>
+    <p>
+Nota: i collegamenti al server sono sempre espliciti e ci si può collegare a un solo server alla volta. Nulla vieta agli amministratori di far comunicare due o più server fra di loro e di utilizzare un webserver locale (casalingo o installato nel cellulare) per fornire l'applicazione in modo da non dipendere dalla connettività internet per caricare le pagine dell'app. Al momento non è sperimentato un nodo server completo su cellulare, anche se il sistema utilizzato è stato sperimentato con successo su piattaforme simili (arm64, i sistemi simili al raspberry pi). La app è compatibile con la modalità offline di firefox. La app cerca di caricare tutte le pagine in memoria per poter essere usata quando la connessione è instabile o assente. Il tempo in cui le pagine permangono in memoria dipende dal browser, potrebbe essere di 24 ore o protrarsi più a lungo.
+    </p>
+    <p>
+Per accedere normalmente a sneakspeak inserire nel browser l'indirizzo della pagina principale ("HOME") o seguire le istruzioni del browser quando chiede se volete installare il sito sul vostro pc/cellulare. I dati come il server selezionato e canale selezionato vengono persi se si chiude il tab o si apre un altro tab sulla stessa applicazione. Altri dati come identità e contenuti dei canali restano in memoria, dipendentemente da come è configurato il navigatore internet dell'utente. Per cancellare i dati bisogna quindi agire tramite cronologia del browser eliminando i dati (non solo i cookies) relativi all'app. 
+    </p>
+    <p>
+<h1>PAGINA PRINCIPALE:</h1>
+<p>La pagina mostra in cima informazioni utili come la ID usata in quel momento, il canale usato e il server usato, se si è attivata la modalità privata con suggerimenti cliccabili qualora fossero assenti, se l'utente sta mandando messaggi a scadenza, e una serie di pulsanti.
+</p>
+<h1>Pulsante Crea ID nuova:</h1>
+<p>Con la configurazione veloce si è ottenuta una ID a perdere. Per essere identificabili a lungo termine occorre quindi creare una ID, conservare il file che la contiene e ricaricarlo qualora il browser lo perda per cancellazione cronologia, cambio pc o altro. Cliccare sul riquadro del nome, inserire quattro lettere per il nome breve, che aiuterà nell'identificazione. Il limite di quattro lettere dipende dal protocollo usato e non è quindi modificabile. Si tratta di una maniera per dimostrare che ci possono essere diversi utenti con lo stesso nome breve, ma avranno indirizzo diverso. A fine creazione il browser o salva automaticamente o chiede di salvare il file di testo che contiente l'identità, da conservare se si vuol continuare a scrivere con essa. La creazione della ID avviene in locale e non viene trasmessa via rete, quindi l'amministratore non è in grado di recuperare ID dimenticate. Il segreto della ID correntemente utilizzata, anche di quelle a perdere, si può desumere dalla pagina "Salva preferenze". Esiste anche un pulsante Ripristina che è equivalente al pulsante qui sotto descritto.
+</p>
+<h1>Pulsante Carica ID da file:</h1>
+<p>Da browser desktop si può trascinare il file, da qualsiasi browser premere su scegli file, per caricare un file identità creato con il comando precedente e usarla per scrivere. 
+<h1>Pulsante CANALI:</h1>
+<p>mostra un riquadro dal quale si può scegliere su quale canale operare. 
+</p>
+<h2>CANALI &gt;&gt; Chat:</h2>
+<p>(Quando non c'è un server diventa "Scrivi (offline)") per aggiungere messaggi, verranno visualizzati i messaggi più recenti (non per data di scrittura ma per ordine di arrivo). L'autore del messaggio verrà identificato da nome breve (vedi sotto) e striscetta colorata che varia a seconda del nome completo. Come succede con i cosiddetti "gravatar".
+</p>
+<h2>CANALI &gt;&gt; Apri:</h2>
+<p> mostra tutti i messaggi, paginati. Si mostra anche interamente l'identità pubblica dell'autore, la data di creazione, l'eventuale scadenza prefissa da una freccetta, l'indirizzo completo e il percorso completo del messaggio, per eventuale uso con altre applicazioni che usano il medesimo protocollo (chiamato "earthstar"). Con doppio click si modifica i messaggi propri, cancellando il contenuto del riquadro si rende il messaggio vuoto e quindi non sincronizzato con altri utenti ovvero "cancellato".
+<br>I link per la paginazione contengono il numero delle pagine tra parentesi ([1] [2] etc., oltre ad un pulsante per esportare in un file di testo solo i messaggi di quella pagina. Per esportare tutti i messaggi del canale vedi sotto.
+</p>
+<h2>CANALI &gt;&gt; Usa:</h2>
+<p>Per selezionare un canale tra quelli disponibili. Il canale nel riquadro risulta selezionato per le le operazioni come chat, apri, invita....
+</p>
+<h2>CANALI &gt;&gt; Invita:</h2>
+<p>Appare un riquadro con un invito al canale selezionato. L'invito è una scritta che inizia per earthstar:// Cliccando il riquadro L'invito viene selezionato totalmente, si potrà quindi copiare, e da lì in altre applicazioni condividere o memorizzare in un file di testo. L'invito è a sola lettura.
+</p>
+<h3>CANALI &gt;&gt; Invita &gt;&gt; Invito Scrittura:</h3>
+<p>Aggiunge all'invito anche il segreto. Chi ottiene tale invito può anche scrivere sul canale.
+</p>
+<h3>CANALI &gt;&gt; Invita &gt;&gt; Rendi Modificabile (amministratori)</h3>
+<p>rende l'invito modificabile se si vuol alterare direttamente dalla pagina per rimuovere o editare un indirizzo di server. (bug: Da mobile l'operazione è difficile)
+</p>
+<h2>CANALI &gt;&gt; Ricevi:</h2>
+<p>Da qui si può incollare un invito ricevuto e premere il pulsante Ricevi, così il canale verrà inserito nell'elenco canali.
+</p>
+<h2>CANALI &gt;&gt; Nuovo:</h2>
+<p>Per generare un canale si scrive il nome, che andrà a formare la prima parte dell'indirizzo e si preme genera. Il canale verrà aggiunto all'elenco, si potrà quindi comunicarlo ad altri usando CANALI &gt;&gt; Invita. ATTENZIONE, il canale non verrà sincronizzato col server finchè non viene aggiunto da chi ne ha l'autorizzazione, vedi sotto. Un utente normale può quindi crearsi un canale per memorizzare note personali.
+</p>
+<h2>CANALI &gt;&gt; Esporta:</h2>
+<p>Per effettuare il salvataggio di un file di testo contenente tutti i messaggi del canale. Il file conterrà il nome del canale, e ciò verrà utilizzato per verifica durante il caricamento.
+</p>
+<h2>CANALI &gt;&gt; Dimentica:</h2>
+<p>Rimuove un canale dall'elenco. Non cancella dalla memoria i contenuti e non vieta ad altri di utilizzare il canale per continuare a scambiarsi dati.
+</p>
+<h2>CANALI &gt;&gt; Blocca scrittura:</h2>
+<p>Nel caso si voglia rinunciare a scrivere su un canale. Per riottenere il permesso occorrerà trovare un invito completo al canale ovvero che contenga anche il segreto.
+</p>
+<h2>CANALI &gt;&gt; Notifiche:</h2>
+<p>Attiva le notifiche (il browser chiederà il permesso) - Attenzione, le notifiche vengono emesse solo dalla app stessa e dalla finestra di chat. Se quindi non si lascia tale finestra aperta nel browser, non se ne riceveranno. Il tipo di notifica si pu&ograve; personalizzare tramite le preferenze del browser o di sistema.</p>
+<h1>Pulsante SERVERS:</h1>
+<p>Mostra un riquadro con l'elenco dei server conosciuti. Non è detto che siano funzionanti o che l'indirizzo abbia senso. Ad esempio se io creo un invito mentre sto usando un server sulla rete locale o un server con indirizzo 127.0.0.1 o localhost che sta sulla mia stessa macchina, chi riceve l'invito si vedrà aggiunti server con indirizzi da lui inutilizzabili. Nota per gli amministratori: Al momento sono stati testati solo indirizzi ipv4 e dominii che a loro si riferiscono.
+</p>
+<h2>SERVERS &gt;&gt; Aggiungi:</h2>
+<p>Se si conosce un server che ospita canali che si vuole sincronizzare, aggiungerlo scrivendo l'indirizzo nel riquadro, leggere le indicazioni. Premere aggiungi per inserire il server nell'elenco. Bug: premendo annulla viene de-selezionato il server correntemente utilizzato, selezionarlo dalla pagina SERVERS e premere Usa per ripristinarlo.
+</p>
+<h2>SERVERS &gt;&gt; Usa:</h2>
+<p>Dice a sneakspeak di sincronizzarsi a questo server e di usarlo quando si inserisce messaggi. Sneakspeak permette di utilizzare un solo server alla volta in modo da dare all'utente un controllo esplicito dei canali di comunicazione. La sincronizzazione termina quando appare "...fatto", cosa che non accadrà con indirizzi sbagliati/inutilizzabili o server inattivi.
+</p>
+<h2>SERVERS &gt;&gt; Vai Offline:</h2>
+<p>De-seleziona il server utilizzato. In questo modo le operazioni di scrittura e modifica messaggi restano nella memoria del navigatore. Per tornare a trasmettere e ricevere, ovviamente solo i canali conosciuti ad un server, selezionarlo con SERVERS &gt;&gt; Usa
+</p>
+<h2>SERVERS &gt;&gt; Aggiungi canale</h2>
+<p>(per amministratori o utenti esperti in possesso delle credenziali del canale di servizio). Vedi documentazione per amministratori. Se il canale attualmente selezionato è quello di servizio per il server attualmente selezionato, andare a prelevare l'invito del canale che si vuol aggiungere e poi premere Aggiungi Canale, verificare dalle scritte che siano usati i canali e i server giusti, incollare l'invito e premere ricevi. Aprendo il canale di servizio con CANALI &gt;&gt; Apri, si potrà verificare i canali aggiunti.
+</p>
+<h2>SERVERS &gt;&gt; Dimentica:</h2>
+<p>rimuove un indirizzo server dall'elenco server conosciuti. Non mette il server offline, non previene ad altri di utilizzarlo.
+</p>
+<h1>Pulsante persistenza messaggi:</h1>
+<p>Stabilisce una durata dei messaggi inviati da quel momento in poi.
+</p>
+<h2>Persistenza messaggi &gt;&gt; Scegli: opzione durata</h2>
+<p>dal menu a discesa scegliere una durata. La conferma viene espressa in secondi.
+</p>
+<h2>Persistenza messaggi &gt;&gt; Calcola:</h2>
+<p>Inserendo una data, facoltativamente anche un orario e premendo calcola viene impostata la relativa durata in secondi.
+</p>
+<h2>Persistenza messaggi &gt;&gt; Senza Limite:</h2>
+<p>per tornare a messaggi senza scadenza<br>
+Nota: La durata viene calcolata sempre dal momento della scrittura, quindi se si inserisce come data la mezzanotte ma il messaggio viene inviato dopo 50 minuti dal calcolo, il messaggio verrà considerato scaduto a mezzanotte e 50. I messaggi scaduti vengono cancellati dai server quando si sincronizzano o compiono operazioni. Quindi teoricamente sono recuperabili da server inattivi o disattivati da attacchi.
+</p>
+<h1>Pulsante modalità privata:</h1>
+<p>con la modalità privata attivata, i messaggi vengono cifrati attraverso il segreto del canale utilizzato per scrivere, e una password. Se la password è vuota chi conosce il segreto può leggerli attivando la modalità privata, mentre gli utenti in modalità normale vedranno il messaggio in codice, illeggibile. Se si attiva impostando una password si potranno leggere solo i messaggi scritti quando quella password era inserita. Pertanto nello stesso canale diversi utenti possono inserire messaggi con diverse password. Conoscere la password usata su un canale non permette di leggere anche altri canali, bisogna saperne anche il segreto. Non esiste alcun controllo da parte dell'amministratore sulla password usata, quindi non potranno resettarla o bloccarla. Non esiste il concetto di password giusta, ogni password permetterà di scrivere messaggi criptati con essa e renderà leggibili solo quelli. Prima di scrivere dopo aver reinserito una password conviene accertarsi che sia quella giusta, controllando se i messaggi criptati precedentemente sono leggibili. In ogni caso la password è collegata univocamente alla chiave pubblica, che si vede nel percorso di ogni messaggio criptato dopo la scritta "pubkey".
+<br>Disattivando la modalità si torna a scrivere normalmente e non si riuscirà a leggere i messaggi cifrati, neanche i propri.
+</p>
+<h1>Pulsante Salva preferenze:</h1>
+<p>Permette di scaricare un file che contiene i dati specificati nella pagina (identità, canali etc.). Il pulsante ripristina è equivalente al pulsante sotto descritto.
+</p>
+<h1>Pulsante Carica preferenze:</h1>
+<p>Funziona in maniera analoga al pulsante Carica ID da file, per il file salvato col pulsante precedente. Verrà chiesta conferma prima di sovrascrivere i settaggi correnti con quelli del file.
+</p>
+
+<h1>Pulsante Reset configurazione:</h1>
+<p>dimentica ID, canali e server utilizzati, per ripartire da configurazione vuota. Utile anche in caso di aggiornamento della app. Non è detto che questi dati non siano recuperabili da persone esperte di browser internet o di sistemi operativi. Anche i dati rimangono probabilmente recuperabili.
+</p>
+<h1>Pulsante ISTRUZIONI:</h1>
+<p>Mostra questa pagina.</p>
+
+<p>Ritorna a <button id="home" onclick="window.location.href='./index.html'">HOME</button>
+</p>		
+</body>
+</html>

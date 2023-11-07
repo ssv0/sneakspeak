@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title l10n="Chat (live)">Chat (live)</title>
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<script src="./lib/init.js"></script>
+	<style>
+		html, body {
+			margin: 0;
+			padding: 0;
+		}
+		body { height: 100vh; }
+		.container {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+		}
+		.content {
+			flex: 1;
+		}
+		.textarea {
+			width:100%;
+			height: 3em;
+			resize: none;
+			border: none;
+			padding: .2em;
+			box-sizing: border-box;
+		}
+		.button {
+			width:100%;
+			padding: .1em .2em;
+			display: inline-block;
+			margin: .1em;
+			cursor: pointer;
+		}
+		form#message-form {
+			width:98%;
+			margin:auto;
+		}
+		#scroller {
+			overflow-y:scroll;
+		}
+		#scroller * {
+			overflow-anchor: none;
+		}
+		#anchor {
+			overflow-anchor: auto;
+			height: 1px;
+		}
+		#init_block {
+			height: 100%;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			padding:1em;
+		}
+		#init_block p {
+			text-align:center;
+			overflow-wrap: anywhere;
+		}
+		#messages div {
+			white-space: pre-wrap;
+			overflow-wrap: anywhere;
+			max-height: 12em;
+			overflow-y: auto;
+			overflow-x: hidden;
+			border-radius: 1em;
+			background-color:#181818;
+			padding:.5em;
+			margin-bottom:.2em;
+		}
+		#messages div p {
+			background-repeat: no-repeat;
+			background-size: 7em 0.2em;
+			background-position: top left;
+		}
+		small {
+			font-size: .7em;
+			font-style: italic;
+			vertical-align:baseline;
+		}
+	</style>
+	
+	
+</head>
+<body>
+	<script>
+		const prefs = JSON.parse(sessionStorage.getItem("sneakSpeakSessionPrefs")); //using Lib would complicate things a little
+		var passwdHash = prefs?.passwd_current ?? null;
+		if (passwdHash !== null) { // conditionally load sodiumjs
+			const sodiumScript = document.createElement('script');
+			sodiumScript.src='./lib/browsers-sumo/sodium.js';
+			sodiumScript.async=false;
+			document.head.appendChild(sodiumScript);
+		}
+	</script>
+	
+	<div class="container">
+		<div class="content" id="scroller">
+			<div id="init_block"></div>
+			<div id="messages"></div>
+			<div id="anchor"></div>
+		</div>
+		<form id="message-form">
+			<textarea class="textarea" id="message-input" name="message-input" autocomplete="off"></textarea>
+			<button class="button" id="btn_send">Send</button>
+		</form>
+		
+		<script type="module" defer>
+			
+			import * as Lib from "./lib/lib.js";	
+			import * as Earthstar from "./lib/earthstar.web.js";
+			// globalThis.Earthstar = Earthstar; //debug
+			
+			const settings = new Earthstar.SharedSettings();
+			
+			Lib.checkShare(settings);
+			Lib.checkAuthor(settings);
+			
+			const share=SSsession.getItem("channel_current");
+			const secrets = settings.shareSecrets;
+			const currentSecret = secrets[share];
+			const shareKeypair = {shareAddress: share, secret: currentSecret};
+			const authorKeypair = settings.author;
+			const syncTo = SSsession.getItem("srv_current");
+			const expiry = Number(SSsession.getItem("expiry_current"));
+			const btn=document.getElementById("btn_send");
+			var stopNotificationsOnce = true;
+			
+			var scrthash, keyPair;
+			if (passwdHash !== null) {
+				await sodium.ready;
+				scrthash = sodium.crypto_generichash(32, passwdHash + currentSecret); // the key depends also on the channel secret
+				keyPair = await sodium.crypto_box_seed_keypair(scrthash);
+			}
+			
+			document.title += (' ' + share);
+			 
+			let channelHeader = '<p>' + t("Channel") + `:<br>${share}<br>${t("Server")}: ${syncTo}` ;
+			
+			if (expiry > 0) {
+				channelHeader += '<p>' + t("Message persistence") +  `: ${expiry/1000000}s </p>`;
+			}
+			if (passwdHash !== null) {
+				channelHeader += '<p>' + t("Private Mode Enabled") + `(${passwdHash.slice(0,8)}&hellip;)</p>`;
+			}
+			channelHeader += '<br><a href="./channels.html">['+t("Back")+']</a>';
+			document.getElementById("init_block").innerHTML = channelHeader + '<br>&darr;&darr;&darr;&darr;&darr;&darr;&darr;&darr;&darr;&darr;&darr;&darr;&darr;&darr;</p>';
+			
+			if (currentSecret === undefined) { // readonly box
+				passwdHash = null; // don't do crypto
+				btn.innerHTML=t("Read Only");
+				btn.disabled = true;
+			} else {
+				btn.innerHTML=t("Send") // can't use l10n
+			}
+			
+			const replica = new Earthstar.Replica({
+				driver: new Earthstar.ReplicaDriverWeb(shareKeypair.shareAddress),
+				shareSecret: shareKeypair.secret,
+			});
+			
+			const peer = new Earthstar.Peer();
+			peer.addReplica(replica);
+			
+			//initial sync, unless "offline mode" (no server)
+			if (syncTo !== null) {
+				const deflt=btn.innerHTML;
+				const syncer = peer.sync(syncTo);
+				btn.innerHTML="Sync&hellip;";
+				btn.disabled = true;
+				await syncer.isDone();
+				btn.disabled = false;
+				btn.innerHTML= deflt;
+			}
+			
+			const startIdx = await replica.getMaxLocalIndex();
+			
+			const form = document.getElementById("message-form");
+			const input = document.getElementById("message-input");
+			
+			form.addEventListener("submit", async (event) => {
+				event.preventDefault();
+				if (input.value.trim() === "") { return }
+				const toBeWritten = {
+					text: input.value,
+					path: `/chat/ssv0/${Date.now()}/~${authorKeypair.address}` , // ssv0 is for sneakspeak version 0.x,
+				}
+				Lib.setExpiry(toBeWritten);
+				if (passwdHash !== null) { Lib.obfuscateDoc(toBeWritten, keyPair) } // don't mod path after this or bugs will be triggered
+				const result = await replica.set(authorKeypair, toBeWritten);
+				if (Earthstar.isErr(result)) {
+					console.error(result);
+				}
+				
+				input.value = "";
+				stopNotificationsOnce = true;
+			});
+			
+			// Read messages from chat.
+			const messages = document.getElementById("messages");
+			
+			const cache = new Earthstar.ReplicaCache(replica);
+			
+			function appendMessages(docs) {
+				if (passwdHash !== null) {
+					Lib.deobfuscateDocs(docs,keyPair);
+				}
+				for (let i = docs.length - 1 ; i >= 0; i--) {
+					const doc = docs[i];
+					const message = document.createElement("div");
+					const header = document.createElement("p");
+					const author = Earthstar.parseAuthorAddress(doc.author);
+					const date = new Date(doc.timestamp / 1000);
+					const dateString = date.toLocaleString();
+					header.style.backgroundImage = Lib.crcToGradient(author.address);
+					header.innerHTML = `${author.name} <small>${dateString}</small> »`;
+					message.textContent = doc.text;
+					message.insertBefore(header, message.firstChild);
+					messages.append(message);
+				};
+			}
+			
+			function updQuery (LocIdx){ //the query to get the latest docs
+				return {
+					historyMode: "latest",
+					startAfter: { localIndex: LocIdx },
+					filter: { pathStartsWith: "/chat" },
+					orderBy: "localIndex DESC"};
+			}
+			
+			var maxRenderedIdx=startIdx;
+			cache.onCacheUpdated( async () => {
+				newDocs = cache.queryDocs(updQuery(startIdx));
+				let newRenderedIdx = await replica.getMaxLocalIndex();
+				if (newDocs.length <= 0) { return }
+				appendMessages(newDocs.slice(0,(newRenderedIdx-maxRenderedIdx)));
+				maxRenderedIdx=newRenderedIdx;
+				if ((stopNotificationsOnce == false) && (Notification.permission === 'granted')) {
+					if (document.hasFocus() == false) { //user already looking 
+						navigator.serviceWorker.controller.postMessage('notifyNewMsg');
+					}
+				} else {
+					stopNotificationsOnce = false;
+				}
+			});
+			
+			//initial rendering
+			
+			const chatHistLen = 50; // chat history length
+			messages.innerHTML = "";
+			const chatDocs = await replica.queryDocs({ historyMode: "latest", filter: { pathStartsWith: "/chat/ssv0" }, limit: chatHistLen, orderBy: "path DESC"});
+			if (chatDocs.length < 1) { messages.innerHTML = t("No messages (yet)")}
+			appendMessages(chatDocs);
+			
+			const scrollanchor = document.getElementById("anchor");
+			scrollanchor.scrollIntoView(); // and scroll down
+			
+			if (syncTo !== null) { peer.sync(syncTo, true);} // continuous
+			var newDocs = cache.queryDocs(updQuery(startIdx)); // this works as cache init, returns []
+			
+		</script>
+	</div> <!--container-->
+</body>
+</html>

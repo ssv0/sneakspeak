@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="Servers">Servers</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<script>
+	</script>
+	<h1 l10n="Servers">Servers:</h1>
+	<select id="server_list">
+	</select>
+	<div class="grid-container">
+		<button id="btn_add" l10n="Add">Add</button>
+		<button id="btn_sync" l10n="Synchronize">Synchronize</button>
+		<button id="btn_offline" l10n="Go offline">Go offline</button>
+		<button id="btn_rec" l10n="Add a channel">Add a channel</button>
+		<button id="btn_delete" l10n="Forget">Forget</button>
+		<button id="home" onclick="window.location.href='./index.html'" l10n="Home">HOME</button>
+		
+	</div>
+	<div id="outputdiv">
+	</div>
+	<script type="module">
+		const outputdiv=document.getElementById("outputdiv");
+		var dropdown=document.getElementById("server_list");
+		
+		import * as Earthstar from "./lib/earthstar.web.js";
+		import * as Lib from "./lib/lib.js";
+		
+		const settings = new Earthstar.SharedSettings();
+		
+		
+		document.getElementById("btn_add").addEventListener("click", function() {
+			window.location.href = "./server_new.html";
+		});
+		
+		document.getElementById("btn_sync").addEventListener("click", async function() {
+			const server=dropdown.value;
+			
+			const peer = new Earthstar.Peer();
+			
+			for (const share of settings.shares) {
+				const replica = new Earthstar.Replica({
+					driver: new Earthstar.ReplicaDriverWeb(share),
+					shareSecret: settings.shareSecrets[share],
+				});
+				
+				peer.addReplica(replica);
+			}
+			
+			const syncer = peer.sync(server);
+			outputdiv.insertAdjacentHTML("beforeend", (t("Syncing")));
+			await syncer.isDone();
+			outputdiv.insertAdjacentHTML("beforeend", (t("Done")));
+			SSsession.setItem("srv_current",server);
+			outputdiv.insertAdjacentHTML("beforeend", (`<p>${t("Selected Server:")} ${server}</p>`));
+		});
+		
+		document.getElementById("btn_rec").addEventListener("click", function() {
+			const server=dropdown.value;
+			SSsession.setItem("srv_current",server);
+			window.location.href = "./server_receive.html";
+		});
+		
+		document.getElementById("btn_offline").addEventListener("click", function() {
+			const server=dropdown.value;
+			SSsession.setItem("srv_current",null);
+			outputdiv.insertAdjacentHTML("beforeend", (`<p>${t("Offline Mode")} - ${t("Disconnected from")} ${server}</p>`));
+		});
+		
+		document.getElementById("btn_delete").addEventListener("click", function() {
+			const server=dropdown.value;
+			if (confirm(`${t("Confirm removing")} ${server} - ${t("Other users can keep using it")}`)) {
+				settings.removeServer(server);
+				const cserver = SSsession.getItem("srv_current");
+				if (cserver.replace(/\/+$/, '') == server.replace(/\/+$/, '')) { // no trailing slashes
+					SSsession.removeItem("srv_current");
+				}
+				outputdiv.insertAdjacentHTML("beforeend", (`<p>${t("Removed:")} ${server}</p>`));
+				rendersrvlist();
+			}
+		});
+		
+		
+		function rendersrvlist() {
+			dropdown.innerHTML = '';
+			const allServers = settings.servers.sort();
+			
+			for (var i = 0; i < allServers.length; i++) {
+				var option = document.createElement("option");
+				option.value = allServers[i];
+				option.text = option.value;
+				if (option.value === SSsession.getItem("srv_current")) {
+					option.selected = true;
+				}
+				dropdown.appendChild(option);
+			}
+		}
+		
+		rendersrvlist();
+		
+	</script>
+</body>
+</html>

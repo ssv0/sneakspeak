@@ -1,0 +1,21 @@
+# supponiamo di avere il dominio ilmioserver.cc che punta alla nostra macchina, le porte 8081 8082 e 8083 libere da servizi e accessibili da internet (necessario per l'acquisizione automatica di certificati)
+# eliminare le prime due direttive qui sotto se il server è raggiungibile via rete, eliminare anche la terza se la porta 80 è occupata, se non si è root, o se non si vuole redirezionamenti da http
+# mantenendo skip_install_trust caddy prova a far accettare i suoi certificati al pc locale per avere meno errori
+{
+	local_certs
+	skip_install_trust
+	auto_https disable_redirects
+}
+
+https://ilmioserver.cc:8083 {
+	root * ../www
+	file_server
+}
+
+https://ilmioserver.cc:8082 {
+	@websockets {
+		header Connection *Upgrade*
+		header Upgrade websocket
+	}
+	reverse_proxy @websockets :8081
+}

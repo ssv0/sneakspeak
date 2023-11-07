@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="IdLoad">Load ID from file</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	
+</head>
+<body>
+	<h1 l10n="IdLoad">Load ID from file</h1>
+	<div id="drop-zone">
+		<p "Drop file here">Drop file here or press button to select one</p>
+		<input type="file" id="file-input">
+	</div>
+	<div class="grid-container">
+		<button id="home" onclick="window.location.href='./index.html'" l10n="Home">&rarr;HOME</button>
+	</div>
+	<div id="outputdiv">
+	</div>
+	<script type="module">
+		import * as Earthstar from "./lib/earthstar.web.js";
+		const settings = new Earthstar.SharedSettings();
+		
+		
+		const dropZone = document.getElementById('drop-zone');
+		const fileInput = document.getElementById('file-input');
+		const outputdiv=document.getElementById("outputdiv");
+		
+		function author_restore_fromString(s) {
+			const author_kp = JSON.parse(s);
+			if ((Object.keys(author_kp).length == 2) && ("address" in author_kp) && ("secret" in author_kp)) {
+				settings.author = author_kp;
+				outputdiv.insertAdjacentHTML("beforeend", (author_kp.address} + ': ' +t("successfully loaded.") +'</p>'));
+			} else {
+				outputdiv.insertAdjacentHTML("beforeend", (t("Does not look like a valid ID file (address + key)")));
+			}
+		};
+		
+		
+		dropZone.addEventListener('dragover', (event) => {
+			event.preventDefault();
+			dropZone.classList.add('drag-over');
+		});
+		
+		dropZone.addEventListener('dragenter', (event) => {
+			event.preventDefault();
+			dropZone.classList.add('drag-over');
+		});
+		
+		dropZone.addEventListener('dragleave', (event) => {
+			dropZone.classList.remove('drag-over');
+		});
+		
+		dropZone.addEventListener('drop', (event) => {
+			event.preventDefault();
+			dropZone.classList.remove('drag-over');
+			const file = event.dataTransfer.files[0];
+			const reader = new FileReader();
+			
+			reader.onload = (event) => {
+				const contents = event.target.result;
+				author_restore_fromString (contents);
+			};
+			
+			reader.readAsText(file);
+		});
+		
+		
+		fileInput.addEventListener('change', (event) => {
+			const file = event.target.files[0];
+			const reader = new FileReader();
+			
+			reader.onload = (event) => {
+				const contents = event.target.result;
+				author_restore_fromString (contents);
+			};
+			
+			reader.readAsText(file);
+		});
+		
+		
+	</script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+@font-face {
+	font-family: 'PTMono';
+	src: url('../fonts/PTMono-Regular.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+}
+body {
+	color-scheme: dark;
+	background-color: #17272c;
+	color: white;
+	font-family: PTMono, monospace;
+	font-size: 1em;
+	padding: .2em;
+	line-height: 130%;
+}
+h1 {
+	color:yellow;
+	padding: .2em 0 .2em 0;
+	font-size: 2em;
+	letter-spacing: 1px;
+	font-weight: bold;
+	line-height: 110%;
+}
+h2 {
+	color:yellow;
+	padding: .2em 0 .2em 0;
+	font-size: 1.3em;
+	font-weight: bold;
+}
+
+a {
+	color: yellow;
+	font-weight: bold;
+	text-decoration: none;
+	letter-spacing: 1px;
+}
+a:visited {
+	color: yellow;
+}
+a:hover {
+	color: yellow;
+	text-decoration: underline;
+}
+
+/* Set up the grid */
+.grid-container {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	grid-auto-rows: minmax(50px, auto);
+	gap: 10px;
+}
+
+/* Style the buttons */
+.grid-container button {
+	padding: 10px 20px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	margin: 4px 2px;
+	cursor: pointer;
+}
+
+/* Make the grid responsive */
+@media screen and (max-width: 600px) {
+	.grid-container {
+		grid-template-columns: repeat(2, 1fr);
+		grid-auto-rows: minmax(50px, auto);
+	}
+}
+
+@media screen and (max-width: 400px) {
+	.grid-container {
+		grid-template-columns: 1fr;
+		grid-auto-rows: minmax(50px, auto);
+	}
+}
+
+
+
+input, select, textarea, button {
+	font-family: PT-Mono, monospace;
+	border: 1px solid yellow;
+	background: #333;
+	margin: 1px;
+	border-radius: 2px;
+}
+
+
+button {
+	cursor: pointer;
+	font-family: PT-Mono, monospace;
+	font-weight: bold;
+	border: 2px solid;
+	border-radius: 6px;
+	color:yellow;
+}
+button:disabled {
+	color: #444;
+	background-color: #868686;
+	font-style: italic;
+}
+button:disabled:hover {
+	cursor: not-allowed;
+}
+fieldset {
+	border: 1px solid yellow;
+	margin: 1px;
+	padding: 5px;
+	border-radius: 2px;
+}
+legend {
+	color: yellow;
+}
+form input {
+	color: yellow;
+}
+form select option {
+	color: yellow;
+}
+form select {
+	color: yellow;
+	cursor: pointer;
+}
+input#confirm_reset{
+	-webkit-appearance: none;
+}
+
+input#confirm_reset::-webkit-slider-runnable-track {
+	width: auto;
+	height: 5px;
+	background:yellow;
+}
+
+input#confirm_reset::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	border: none;
+	height: 16px;
+	width: 16px;
+	border-radius: 7px;
+	background: red;
+	margin-top: -5px;
+}
+
+td {
+	vertical-align: top;
+	height: 110%;
+	font-family: inherit;
+	font-size: 0.9em;
+}
+pre {
+	padding: 0px;
+	margin: 0px;
+	font-size: 1.1em;
+	font-family: inherit;
+	font-weight: bold;
+}
+textarea {
+	color: #67ffd6;
+	font-family: inherit;
+	font-size: 0.9em;
+}
+th {
+	text-align: left;
+	font-size: 0.9em;
+	font-weight: normal;
+	white-space: nowrap;
+}
+li {
+	margin: 10px;
+}
+div#drop-zone {
+	padding: 1em 0.2em 1em 0.2em;
+	background: #663;
+	border-radius: 6px;
+}
+div#drop-zone.drag-over {
+	background: #996;
+	cursor: move;
+}
+input#file-input { border-radius:6px }
+
+p.warn {
+	color:#f33;
+	font-weight:bold;
+}
+small {
+	font-size: 70%; /* specify the desired font size */
+}
+
+img.flag {
+	width: 1.5em;
+	height: 1em;
+} 

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="Private Mode">Private Mode</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<script src="./lib/browsers-sumo/sodium.js"></script>
+	<script src="./lib/init.js"></script>
+	<script>
+		function toggleVisibility() {
+			var passwordInput = document.getElementById("passwd");
+			var togglePassword = document.getElementById("togglePassword");
+			
+			if (togglePassword.checked) {
+				passwordInput.type = "text";
+			} else {
+				passwordInput.type = "password";
+			}
+		}
+	</script>
+	
+</head>
+<body>
+	<h1 l10n="Private Mode">Private Mode</h1>
+	<form id="passwd_form" width="100%">
+		<label for="passwd" l10n="Password">Password (can be empty):</label>
+		<input type="password" size="18" id="passwd" name="passwd" autocomplete="off"><br>
+		<label for="togglePassword" l10n="Show Password">Show password:</label>
+		<input style="margin-top:.3em" type="checkbox" id="togglePassword" onclick="toggleVisibility()">
+		<div class="grid-container">
+			<button type="submit" id="btn_passwd" l10n="Enable">Enable</button>
+			<button id="btn_passwd_rst" l10n="Disable" >Disable</button>
+			<button id="home" onclick="window.location.href='./index.html';return false" l10n="Home">HOME</button>
+		</div>
+	</form>
+	<div id="outputdiv">
+	</div>
+	<script type="module" defer>
+		// deferred to hopefully init sodium in the meantime
+		import * as Lib from "./lib/lib.js";
+		const outputdiv=document.getElementById("outputdiv");
+		
+		document.getElementById("passwd_form").addEventListener("submit", async function(event) {
+			event.preventDefault();
+			const passwd = document.getElementById("passwd").value;
+			const hash=sodium.crypto_generichash(32,'random characters to thwart rainbow tables->3egy?ad£fu%2s$4723$3' + passwd); // way better than storing cleartext
+			SSsession.setItem("passwd_current",sodium.to_hex(hash));
+			outputdiv.insertAdjacentHTML("beforeend", ('<p>' + t("Private Mode Enabled") +'</p>'));
+			document.getElementById("btn_passwd").disabled = true;
+		});
+		document.getElementById("btn_passwd_rst").addEventListener("click", function(event) {
+			event.preventDefault();
+			SSsession.removeItem("passwd_current");
+			outputdiv.insertAdjacentHTML("beforeend", ('<p>' + t("Private Mode Disabled") +'</p>'));
+		});
+	</script>
+</body>
+</html>

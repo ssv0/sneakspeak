@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="IdNew">Create new ID</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<h1 l10n="IdNew">Create new ID</h1>
+	<form id="author_new_insert" width="100%">
+		<label for="prefix" l10n="Short name (4 letters):">Short name (4 letters):</label>
+		<input type="text" size="4" id="prefix" name="prefix" autocomplete="off" pattern="[A-Za-z]{4}" required>
+		
+		<div class="grid-container">
+			<button type="submit" id="btn_id_new" l10n="Create">Create</button>
+			<button id="btn_id_rest" l10n="Restore">Restore</button>
+			<button id="home" onclick="window.location.href='./index.html';return false" l10n="Home">&rarr;HOME</button>
+		</div>
+	</form>
+	<div id="outputdiv">
+	</div>
+	<script type="module">
+		const outputdiv=document.getElementById("outputdiv");
+		
+		import * as Earthstar from "./lib/earthstar.web.js";
+		const settings = new Earthstar.SharedSettings();
+		
+		if (settings.author) {
+			const doesWantToReplace = confirm(
+				 settings.author.address + ': ' + t("is the current ID, so it will be overwritten. Proceed?")
+			);
+			
+			if (!doesWantToReplace) {
+				document.getElementById("btn_id_new").disabled = true;
+				alert(t("ID not modified"));
+			}
+		}
+		
+		
+		function generate_download(text, filename) {
+			
+			// Create a Blob object from the text
+			var blob = new Blob([text], {type: "text/plain"});
+			
+			// Create a link with the download attribute and click it
+			var link = document.createElement("a");
+			link.download = filename;
+			link.href = URL.createObjectURL(blob);
+			link.click();
+		}
+		
+		document.getElementById("author_new_insert").addEventListener("submit", async function(event) {
+			event.preventDefault();
+			const prefix = document.getElementById("prefix").value.toLowerCase();
+			const author_kp = await Earthstar.Crypto.generateAuthorKeypair(prefix);
+			settings.author = author_kp;
+			outputdiv.insertAdjacentHTML("beforeend", (author_kp.address + ': ' +t("is the new current ID, store ID file with key in a safe place")));
+			generate_download(JSON.stringify(author_kp),`id_${prefix}.json.txt`);
+			document.getElementById("btn_id_new").disabled = true;
+		});
+		document.getElementById("btn_id_rest").addEventListener("click", function() {
+			window.location.href = "./id_restore.html";
+		});
+	</script>
+</body>
+</html>

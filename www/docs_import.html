@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="Import messages">Import messages</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">	
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<h1 l10n="Import messages">Import messages</h1>
+	<p id="shareID"><small></small></p>
+	<div id="drop-zone">
+		<p l10n="Drop file here">Drop file here</p>
+		<input type="file" id="file-input">
+	</div>
+	<div class="grid-container">
+		<button id="back" onclick="window.location.href='./channels.html'" l10n="Channels">CHANNELS</button>
+	</div>
+	<div id="outputdiv">
+	</div>
+	<script type="module">
+		import * as Earthstar from "./lib/earthstar.web.js";
+		import * as Lib from "./lib/lib.js";
+		const settings = new Earthstar.SharedSettings();
+		Lib.checkShare(settings);
+		const share = SSsession.getItem("channel_current");
+		document.title += share ;
+		document.getElementById("shareID").innerHTML=`(${share})`
+		const replica = new Earthstar.Replica({
+			driver: new Earthstar.ReplicaDriverWeb(share) // no need for secret
+		});
+		const formatLookup=Earthstar.getFormatLookup() // parametrized later with each doc's
+		
+
+		const dropZone = document.getElementById('drop-zone');
+		const fileInput = document.getElementById('file-input');
+		const outputdiv=document.getElementById("outputdiv");
+		
+		function ingestFromFile(file) {
+			const reader = new FileReader();
+			
+			reader.onload = async (event) => {
+				const contents = event.target.result;
+				if (!file.name.startsWith(`ssv0${replica.share}`)) {
+					alert(t("Error: filename doesn't start with 'ssv0(address)', was it renamed maybe? Check the docs to troubleshoot"));
+					return;
+				}
+				const docs = JSON.parse(contents);
+				for (const doc of docs)  {
+					const format = formatLookup[doc.format];
+					await replica.ingest(format,doc,"local");
+				};
+				
+				outputdiv.insertAdjacentHTML("beforeend", (t('Messages loaded')));
+			};
+			
+			reader.readAsText(file);
+		}
+		
+		dropZone.addEventListener('dragover', (event) => {
+			event.preventDefault();
+			dropZone.classList.add('drag-over');
+		});
+		
+		dropZone.addEventListener('dragenter', (event) => {
+			event.preventDefault();
+			dropZone.classList.add('drag-over');
+		});
+		
+		dropZone.addEventListener('dragleave', (event) => {
+			dropZone.classList.remove('drag-over');
+		});
+		
+		dropZone.addEventListener('drop', (event) => {
+			event.preventDefault();
+			dropZone.classList.remove('drag-over');
+			const file = event.dataTransfer.files[0];
+			ingestFromFile(file);
+		});
+		
+		
+		fileInput.addEventListener('change', (event) => {
+			const file = event.target.files[0];
+			ingestFromFile(file);
+		});
+		
+		
+	</script>
+</body>
+</html>

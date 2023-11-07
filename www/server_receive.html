@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="Add Channel to Server">Aggiungi canale a server</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<form id="shareOffer" width="100%">
+		<label id="sOf_label" for="inv_text" l10n="Invite or channel to add:">Canale o invito da aggiungere al server:</label><br>
+		<textarea style="width: 96%; min-height:4em; resize: none" id="sOf_text"></textarea>
+	</form>
+	
+	<div class="grid-container">
+		<button id="btn_sOf_rec" l10n="add">Aggiungi</button>
+		<button id="home" onclick="window.location.href='./index.html'" l10n="Home">HOME</button>
+	</div>
+	<div id="outputdiv">
+	</div>
+	<script type="module">
+		const outputdiv=document.getElementById("outputdiv");
+		const settingsShare = SSsession.getItem("channel_current");
+		const server = SSsession.getItem("srv_current");
+		import * as Earthstar from "./lib/earthstar.web.js";
+		const settings = new Earthstar.SharedSettings();
+		import * as Lib from "./lib/lib.js";
+		Lib.checkShare(settings);
+		Lib.checkAuthor(settings);
+		outputdiv.innerHTML = '<p>' + t("Settings channel:") + settingsShare + '<br>' +t("Selected server:")  + server + '</p>';
+		const shareSecret = settings.shareSecrets[settingsShare];
+		if (shareSecret === undefined) {
+			document.getElementById("btn_sOf_rec").disabled = true;
+			alert(t("No permission to write on settings channel"));
+		}
+		
+		const replica = new Earthstar.Replica({
+			driver: new Earthstar.ReplicaDriverWeb(settingsShare),
+			shareSecret: shareSecret,
+		});
+		
+		const authorKeypair = settings.author;
+		
+		
+		
+		document.getElementById("btn_sOf_rec").addEventListener("click", async function() {
+			let shareToAdd=document.getElementById("sOf_text").value.trim();
+			if (shareToAdd.startsWith("earthstar://")) {
+				const p = await Earthstar.parseInvitationURL(shareToAdd);
+				shareToAdd=p.shareAddress;
+			}
+			const hash = await Earthstar.Crypto.sha256base32(shareToAdd);
+			await replica.set(authorKeypair, { text: shareToAdd, path: `/server-settings/1.0/shares/${hash}/host`});
+			const peer = new Earthstar.Peer();
+			if (server !== null) {
+				peer.addReplica(replica);
+				const syncer = peer.sync(server);
+				outputdiv.insertAdjacentHTML("beforeend", (t("Syncing")));
+				await syncer.isDone();
+				outputdiv.insertAdjacentHTML("beforeend", (t("Done")));
+			} else {
+				outputdiv.insertAdjacentHTML("beforeend", (t("Offline Mode")));
+			}
+		});
+		
+		
+	</script>
+</body>
+</html>

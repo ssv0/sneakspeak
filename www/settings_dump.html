@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="Settings">Settings</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<style>
+		#ta_settings { width: 100%}
+	</style>
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<h1 l10n="Settings">Settings</h1>
+	<form id="settings" width="100%">
+		<textarea id="ta_settings" readonly rows="4"></textarea>	
+		<div class="grid-container">
+			<button type="submit" id="btn_pref_dump" l10n="Dump">Dump</button>
+			<button id="btn_pref_rest" l10n="Restore">Restore</button>
+			<button id="home" onclick="window.location.href='./index.html';return false" l10n="Home">HOME</button>
+		</div>
+	</form>
+	<p l10n="SavedPrefsList">What gets saved: current ID, channels list, channel write permissions, server list. Not saved: the choice of current channel and server, passwords, all other settings.</p>
+	<div id="outputdiv">
+	</div>
+	<script type="module">
+		const outputdiv=document.getElementById("outputdiv");
+		
+		import * as Earthstar from "./lib/earthstar.web.js";
+		const settings = new Earthstar.SharedSettings();
+		const settings_str = JSON.stringify(settings);
+		document.getElementById("ta_settings").innerHTML = settings_str;
+		function generate_download(text, filename) {
+			
+			// Create a Blob object from the text
+			var blob = new Blob([text], {type: "text/plain"});
+			
+			// Create a link with the download attribute and click it
+			var link = document.createElement("a");
+			link.download = filename;
+			link.href = URL.createObjectURL(blob);
+			link.click();
+		}
+		
+		document.getElementById("settings").addEventListener("submit", async function(event) {
+			event.preventDefault();
+			generate_download(settings_str,`settings.json.txt`);
+		});
+		document.getElementById("btn_pref_rest").addEventListener("click", function(event) {
+			event.preventDefault();
+			window.location.href = "./settings_restore.html";
+		});
+	</script>
+</body>
+</html>

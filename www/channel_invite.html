@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="Invite">Invite</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<form id="invite" width="100%">
+		<label id="inv_label" for="inv_text" l10n="Invite (readonly, without write permission)">Invite (readonly, without write permission)</label><br>
+		<textarea style="width: 96%; min-height:4em; resize: none" cols="4" id="inv_text" onclick="this.select()" readonly></textarea>
+	</form>
+	
+	<div class="grid-container">
+		<button id="btn_inv_rw" l10n="Invite Read/Write">Invite Read/Write</button>
+		<button id="btn_inv_edit"l10n="Edit">Edit</button>
+		<button id="btn_back" onclick="window.location.href='./channels.html'" l10n="Back to Channels">Back (&rarr;Channels)</button>
+	</div>
+	<div id="outputdiv">
+	</div>
+	<script type="module">
+		const outputdiv=document.getElementById("outputdiv");
+		var inv_text=document.getElementById("inv_text");
+		
+		import * as Lib from "./lib/lib.js";
+		import * as Earthstar from "./lib/earthstar.web.js";
+		
+		const settings = new Earthstar.SharedSettings();
+		Lib.checkShare(settings);
+		const share=SSsession.getItem("channel_current");
+		inv_text.value = await Earthstar.createInvitationURL(share,settings.servers);
+		
+		document.getElementById("btn_inv_rw").addEventListener("click", async function() {
+			const secrets = settings.shareSecrets;
+			const currentSecret = secrets[share];
+			if (!currentSecret) {
+				outputdiv.innerHTML = '<p>' + t("Current channel is readonly") + '</p>';
+			} else {
+				inv_text.value = await Earthstar.createInvitationURL(share,settings.servers,currentSecret);
+				document.getElementById("inv_label").innerHTML = t("Invite Read/Write (FULL ACCESS):");
+				document.getElementById("btn_inv_rw").disabled = true;
+			}
+			
+		});
+		
+		document.getElementById("btn_inv_edit").addEventListener("click", function() {
+			inv_text.readOnly = false;
+		});
+		
+	</script>
+</body>
+</html>

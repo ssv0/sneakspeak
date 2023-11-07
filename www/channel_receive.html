@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="Receive Invite">Receive Invite</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<form id="invito" width="100%">
+		<label id="inv_label" for="inv_text"  l10n="Paste channel invite">Paste channel invite</label><br>
+		<textarea style="width: 96%; min-height:4em; resize: none" cols="4" id="inv_text"></textarea>
+	</form>
+	
+	<div class="grid-container">
+		<button id="btn_inv_red" l10n="Receive">Receive</button>
+		<button id="home" onclick="window.location.href='./index.html'" l10n="Cancel (Home)">Cancel (&rarr;Home)</button>
+	</div>
+	<div id="outputdiv">
+	</div>
+	<script type="module">
+		const outputdiv=document.getElementById("outputdiv");
+		
+		import * as Earthstar from "./lib/earthstar.web.js";
+		import * as Lib from "./lib/lib.js";
+		
+		const settings = new Earthstar.SharedSettings();
+		
+		document.getElementById("btn_inv_red").addEventListener("click", async function() {
+			const inv_text=document.getElementById("inv_text");
+			const share_kp=await Earthstar.parseInvitationURL(inv_text.value);
+			if(await settings.redeemInvitationURL(inv_text.value) === true) {
+				SSsession.setItem("channel_current",share_kp.shareAddress);
+				alert(t("Invite correctly received, channel selected"));
+				window.location.href = "./index.html";
+			}
+		});
+		
+	</script>
+</body>
+</html>

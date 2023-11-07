@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="Channels">Channels</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<script>
+	</script>
+	<h1 l10n="Channels">Channels</h1>
+	<select id="channel_list">
+	</select>
+	<div class="grid-container">
+		<button id="btn_chat" l10n="Chat (live)">Chat (live)</button>
+		<button id="btn_open" l10n="Open">Open</button>
+		<button id="btn_select" l10n="Use">Use</button>
+		<button id="btn_invite" l10n="Invite">Invite</button>
+		<button id="btn_receive" l10n="Receive">Receive</button>
+		<button id="btn_new" l10n="New">New</button>
+		<button id="btn_dump" l10n="Export Messages">Export Messages</button>
+		<button onclick="window.location.href='./docs_import.html'" l10n="Import Messages">Import Messages</button>
+		<button id="btn_delete" l10n="Forget">Forget</button>
+		<button id="btn_readonly" l10n="Forget write permission">Forget write permission</button>
+		<button id="btn_notify" l10n="Notifications">Notifications</button>
+		<button id="home" onclick="window.location.href='./index.html'" l10n="Home">HOME</button>
+	</div>
+	<div id="outputdiv">
+	</div>
+	<script type="module">
+		const outputdiv=document.getElementById("outputdiv");
+		var dropdown=document.getElementById("channel_list");
+		
+		import * as Earthstar from "./lib/earthstar.web.js";
+		import * as Lib from "./lib/lib.js";
+		
+		const settings = new Earthstar.SharedSettings();
+		
+		
+		if (SSsession.getItem("srv_current") == null) {
+			const btn = document.getElementById("btn_chat");
+			btn.removeAttribute("l10n"); // as it interferes with t(...)
+			btn.innerHTML=t("Write (offline)");}
+		
+		document.getElementById("btn_chat").addEventListener("click", function() {
+			SSsession.setItem("channel_current", dropdown.value);
+			window.location.href = "./channel_chat.html";
+		});
+		
+		document.getElementById("btn_open").addEventListener("click", function() {
+			SSsession.setItem("channel_current", dropdown.value);
+			SSsession.removeItem("channel_current_startAfter"); // reset pagination, todo, try keying on dropdown.value instead
+			window.location.href = "./channel_open.html";
+		});
+		
+		document.getElementById("btn_invite").addEventListener("click", function() {
+			SSsession.setItem("channel_current", dropdown.value);
+			window.location.href = "./channel_invite.html";
+		});
+		
+		document.getElementById("btn_receive").addEventListener("click", function() {
+			window.location.href = "./channel_receive.html";
+		});
+		
+		document.getElementById("btn_select").addEventListener("click", function() {
+			const share=dropdown.value;
+			SSsession.setItem("channel_current", share);
+			outputdiv.insertAdjacentHTML("beforeend", (`<p>${t("Selezionato")}: ${share}</p>`));
+		});
+		
+		function subscribeUserToPush() { // TODO check if really needed, we don't use a push service
+			navigator.serviceWorker.ready.then(function(registration) {
+				registration.pushManager.subscribe({
+					userVisibleOnly: true,
+					applicationServerKey: new Uint8Array([4, 230, 171, 42, 141, 19, 251, 243, 70, 151, 157, 242, 146, 104, 159, 208, 160, 88, 86, 117, 139, 189, 30, 48, 66, 217, 254, 36, 67, 168, 65, 133, 48, 117, 104, 1, 34, 215, 142, 45, 149, 127, 164, 0, 90, 16, 179, 1, 155, 99, 233, 0, 163, 119, 91, 220, 83, 127, 195, 89, 33, 19, 12, 198, 180]), //a throwaway pubkey
+				}).then(function(subscription) {
+					console.log('User is subscribed to push notifications.');
+				}).catch(function(err) {
+					console.log('Failed to subscribe the user: ', err);
+				});
+			});
+		}
+		
+		document.getElementById("btn_notify").addEventListener("click", function() {
+			if (Notification.permission === 'granted') {
+				outputdiv.insertAdjacentHTML("beforeend",(t("Permission granted already, use browser settings to modify")+ '<br>'));
+			} else if (Notification.permission === 'denied') {
+				outputdiv.insertAdjacentHTML("beforeend",(t("Permission denied already, use browser settings to modify") + '<br>'));
+			} else {
+				Notification.requestPermission().then(permission => {
+					subscribeUserToPush();
+					alert(t("Notifications enabled, use system and/or browser settings to personalize, modify"));
+				});
+			}
+		});
+		
+		document.getElementById("btn_new").addEventListener("click", function() {
+			window.location.href = "./channel_new.html";
+		});
+		
+		document.getElementById("btn_delete").addEventListener("click", function() {
+			const share=dropdown.value;
+			if (confirm(t("Confirm removing ") + share + ' ' + t("Other users can keep using it"))) {
+				settings.removeSecret(share);
+				settings.removeShare(share);
+				if (SSsession.getItem("channel_current") === dropdown.value) {
+					SSsession.removeItem("channel_current");
+				}
+				outputdiv.insertAdjacentHTML("beforeend", (t("Removed:") + share +'</p>'));
+				renderchannellist();
+			}
+		});
+		
+		document.getElementById("btn_readonly").addEventListener("click", function() {
+			const share=dropdown.value;
+			if (confirm(t("You are about to forget your own write permission on ") + share )) {
+				settings.removeSecret(share);
+				outputdiv.insertAdjacentHTML("beforeend", (t("Write permission forgotten on ") + share + '</p>'));
+				renderchannellist();
+			}
+		});
+		
+		function renderchannellist() {
+			dropdown.innerHTML = '<optgroup label="'+ t("Full access:") + '"></optgroup><optgroup label="' + t("Readonly access:") + '"></optgroup>';
+			const allShares = settings.shares.sort();
+			const writableShares = (Object.keys(settings.shareSecrets)).sort();
+			const readonlyShares = allShares.filter(el => !writableShares.includes(el));
+			const channelCurrent = SSsession.getItem("channel_current");
+			for (var i = 0; i < writableShares.length; i++) {
+				var option = document.createElement("option");
+				option.value = writableShares[i];
+				option.text = option.value;
+				if (option.value === channelCurrent) {
+					option.selected = true;
+				}
+				dropdown.children[0].appendChild(option);
+			}
+			for (var i = 0; i < readonlyShares.length; i++) {
+				var option = document.createElement("option");
+				option.value = readonlyShares[i];
+				option.text = option.value;
+				if (option.value === channelCurrent) {
+					option.selected = true;
+				}
+				dropdown.children[1].appendChild(option);
+			}
+		}
+		renderchannellist();
+		
+		function generate_download(text, filename) {
+			
+			// Create a Blob object from the text
+			var blob = new Blob([text], {type: "text/plain"});
+			
+			// Create a link with the download attribute and click it
+			var link = document.createElement("a");
+			link.download = filename;
+			link.href = URL.createObjectURL(blob);
+			link.click();
+		}
+		
+		document.getElementById("btn_dump").addEventListener("click", async function() {
+			const share=dropdown.value;
+			const replica = new Earthstar.Replica({
+				driver: new Earthstar.ReplicaDriverWeb(share)
+			});
+			let docs = await replica.getAllDocs();
+			if(confirm(t("Messages about to be exported: ") + docs.length)) {
+				this.disabled=true;
+				generate_download(JSON.stringify(docs),`ssv0${share}-all.json`);
+				this.enabled=true;
+			}
+		});
+		
+	</script>
+</body>
+</html>

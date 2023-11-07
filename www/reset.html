@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title l10n="ResetConfig">Reset Configuration</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./css/reset.css">
+	<link rel="stylesheet" href="./css/default.css">
+	<script src="./lib/init.js"></script>
+</head>
+<body>
+	<h1 style="color:red" l10n="ResetConfig">Reset Configuration</h1>
+	<h2 l10n="IMPORTANT: this operation does not remove data from the browser, you need to clear browser history and data for that.">IMPORTANT: this operation does not remove data from the browser, you need to clear browser history and data for that.</h2>
+	<form id="reset_config">
+		<label for="confirm_reset" style="color:red" l10n="Drag all the way to the right to reset">Drag all the way to the right to reset</label>
+		<input type="range" id="confirm_reset" name="confirm_reset" min="0" max="4" value="0">
+	</form>
+	<div class="grid-container">
+		<button id="home" onclick="window.location.href='./index.html'">HOME</button>
+	</div>
+	<div id="outputdiv">
+	</div>
+	<script type="module">
+		import * as Earthstar from "./lib/earthstar.web.js";
+		const settings = new Earthstar.SharedSettings();
+		//clear cache and service workers
+		async function clearsw() {
+			navigator.serviceWorker.getRegistrations().then(function(registrations) {
+				for(let registration of registrations) {
+					registration.unregister().then(function(boolean) {
+						if (boolean) {
+							console.log('Service worker unregistered');
+						} else {
+							console.log('Service worker not found');
+						}
+					});
+				}
+			});
+			
+			caches.keys().then(function(cacheNames) {
+				cacheNames.forEach(function(cacheName) {
+					caches.delete(cacheName);
+				});
+			});
+		}
+		
+		
+		const outputdiv=document.getElementById("outputdiv");
+		
+		const slider=document.getElementById("confirm_reset");
+		
+		slider.oninput = function() {
+			if (this.value == 4) {
+				settings.clear();
+				sessionStorage.clear();
+				localStorage.clear();
+				clearsw();
+				outputdiv.insertAdjacentHTML("beforeend", ('<p>' + t("Done") + '</p>'));
+			}
+		};
+	</script>
+</body>
+</html>
