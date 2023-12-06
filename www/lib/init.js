@@ -1,4 +1,4 @@
-// this script must be loaded with defer so that translation is done when DOM is parsed
+// functions and initialization for most pages, could be refactored 
 
 function getSessionPrefs() {
 	const prefs = sessionStorage.getItem("sneakSpeakSessionPrefs");
@@ -52,7 +52,7 @@ const l10n = {// localization class
 		let loc = SSlocal.getItem("locale");
 		if (loc) { // conditionally load messages using a script tag
 			var SSmsgLoader = document.createElement('script');
-			SSmsgLoader.src = '/lib/l10n/messages_' + loc + '.js';
+			SSmsgLoader.src = './lib/l10n/messages_' + loc + '.js';
 			document.head.appendChild(SSmsgLoader);
 		}
 	},
