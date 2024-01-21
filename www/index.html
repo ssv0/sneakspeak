@@ -28,13 +28,17 @@
 	</div>
 	<script type="module">
 		// Register the service worker
-		if ('serviceWorker' in navigator) {
+		if ('serviceWorker' in navigator && (navigator.serviceWorker.controller == null)) {
 			window.addEventListener('load', async function() {
-				navigator.serviceWorker.register('./service-worker.js');
-				console.log('Service worker registered');
+				console.log('Registering service worker');
+				navigator.serviceWorker.register('./service-worker.js',{scope: './'});
 			});
 		}
-		
+		if (navigator.serviceWorker.controller) {
+			console.log('Service worker is available');
+		} else {
+			console.error('Service worker not (yet) available');
+		}
 		const outputdiv=document.getElementById("outputdiv");
 		function prnt(s) {
 			outputdiv.insertAdjacentHTML("beforeend", (s));
@@ -79,6 +83,6 @@
 	
 	
 	
-	<p l10n="MainFooter"><small>Sneakspeak: public or private messages over the net or sneakernet - v. 0.6&alpha; (prototype) - uses <a href="http://earthstar-project.org">Earthstar v. 10.2.2</a></small></p>
+	<p l10n="MainFooter"><small>Sneakspeak: public or private messages over the net or sneakernet - v. 0.7&alpha; (prototype) - uses <a href="http://earthstar-project.org">Earthstar v. 10.2.2</a></small></p>
 	</html>
 	
