@@ -64,7 +64,7 @@ SSmsg = {
   "IdLoad": "Carica ID da file",
   "IdNew": "Crea ID nuova",
   "Import messages": "Importa messaggi",
-  "IMPORTANT: this operation does not remove data from the browser, you need to clear browser history and data for that.": "IMPORTANTE: i contenuti non vengono cancellati dal browser con questo comando, eliminare dati dei siti web dalla cronologia del browser per farlo",
+  "IMPORTANT: this operation does not always remove data from the browser, you need to clear browser history and data for that.": "IMPORTANTE: i contenuti non vengono sempre cancellati dal browser con questo comando, eliminare dati dei siti web dalla cronologia del browser per farlo",
   "Instructions": "ISTRUZIONI", 
   "In seconds, starting from the moment the message is created": "Espressa in secondi, la durata si calcola dal momento della creazione del messaggio",
   "Invite": "Invita",

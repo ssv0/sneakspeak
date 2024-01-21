@@ -10,7 +10,7 @@
 </head>
 <body>
 	<h1 style="color:red" l10n="ResetConfig">Reset Configuration</h1>
-	<h2 l10n="IMPORTANT: this operation does not remove data from the browser, you need to clear browser history and data for that.">IMPORTANT: this operation does not remove data from the browser, you need to clear browser history and data for that.</h2>
+	<h2 l10n="IMPORTANT: this operation does not always remove data from the browser, you need to clear browser history and data for that.">IMPORTANT: this operation does not always remove data from the browser, you need to clear browser history and data for that.</h2>
 	<form id="reset_config">
 		<label for="confirm_reset" style="color:red" l10n="Drag all the way to the right to reset">Drag all the way to the right to reset</label>
 		<input type="range" id="confirm_reset" name="confirm_reset" min="0" max="4" value="0">
@@ -49,12 +49,15 @@
 		
 		const slider=document.getElementById("confirm_reset");
 		
-		slider.oninput = function() {
+		slider.oninput = async function() {
 			if (this.value == 4) {
 				settings.clear();
 				sessionStorage.clear();
 				localStorage.clear();
 				clearsw();
+				// note, following two lines are not universally supported
+				const idxdb = await window.indexedDB.databases();
+				idxdb.forEach(d => { window.indexedDB.deleteDatabase(d.name) })
 				outputdiv.insertAdjacentHTML("beforeend", ('<p>' + t("Done") + '</p>'));
 			}
 		};
